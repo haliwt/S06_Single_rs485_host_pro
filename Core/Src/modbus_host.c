@@ -61,7 +61,9 @@ static void MODH_RxTimeOut(void);
 static void MODH_AnalyzeApp(void);
 
 
-static void MODH_Read_01H(void);
+
+static void MODH_Read_Address_01H(void);
+
 static void MODH_Read_02H(void);
 static void MODH_Read_03H(void);
 static void MODH_Read_04H(void);
@@ -111,35 +113,13 @@ static void MODH_SendAckWithCRC(void)
 */
 static void MODH_AnalyzeApp(void)
 {	
-	switch (g_tModH.RxBuf[1])			/* 第2个字节 功能码 */
+	switch (g_tModH.RxBuf[0])			/* 第2个字节 功能码 */
 	{
 		case 0x01:	/* 读取线圈状态 */
-			//MODH_Read_01H();
+	        MODH_Read_Address_01H();
 			break;
 
-		case 0x02:	/* 读取输入状态 */
-			//MODH_Read_02H();
-			break;
-
-		case 0x03:	/* 读取保持寄存器 在一个或多个保持寄存器中取得当前的二进制值 */
-			//MODH_Read_03H();
-			break;
-
-		case 0x04:	/* 读取输入寄存器 */
-			//MODH_Read_04H();
-			break;
-
-		case 0x05:	/* 强制单线圈 */
-			//MODH_Read_05H();
-			break;
-
-		case 0x06:	/* 写单个寄存器 */
-			//MODH_Read_06H();
-			break;		
-
-		case 0x10:	/* 写多个寄存器 */
-			//MODH_Read_10H();
-			break;
+		
 		
 		default:
 			break;
@@ -269,96 +249,6 @@ void MODH_Send00H_Fan_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _data)
 	//g_tModH.RegNum = _num;		/* 寄存器个数 */
 	//g_tModH.Reg04H = _reg;		/* 保存04H指令中的寄存器地址，方便对应答数据进行分类 */	
 }
-
-/*
-*********************************************************************************************************
-*	函 数 名: MODH_Send05H
-*	功能说明: 发送05H指令，写强置单线圈
-*	形    参: _addr : 从站地址
-*			  _reg : 寄存器编号
-*			  _value : 寄存器值,2字节
-*	返 回 值: 无
-*********************************************************************************************************
-*/
-#if 0
-void MODH_Send05H(uint8_t _addr, uint8_t _data_len,uint8_t _data)
-{
-	g_tModH.TxCount = 0;
-	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;			/* 从站地址 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = 0x05;			/* 功能码 */	
-	g_tModH.TxBuf[g_tModH.TxCount++] = _reg >> 8;		/* 寄存器编号 高字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _reg;			/* 寄存器编号 低字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _value >> 8;		/* 寄存器值 高字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _value;			/* 寄存器值 低字节 */
-	
-	MODH_SendAckWithCRC();		/* 发送数据，自动加CRC */
-
-	g_tModH.fAck05H = 0;		/* 如果收到从机的应答，则这个标志会设为1 */
-}
-#endif 
-/*
-*********************************************************************************************************
-*	函 数 名: MODH_Send06H
-*	功能说明: 发送06H指令，写1个保持寄存器
-*	形    参: _addr : 从站地址
-*			  _reg : 寄存器编号
-*			  _value : 寄存器值,2字节
-*	返 回 值: 无
-*********************************************************************************************************
-*/
-#if 0
-void MODH_Send06H(uint8_t _addr, uint16_t _reg, uint16_t _value)
-{
-	g_tModH.TxCount = 0;
-	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;			/* 从站地址 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = 0x06;			/* 功能码 */	
-	g_tModH.TxBuf[g_tModH.TxCount++] = _reg >> 8;		/* 寄存器编号 高字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _reg;			/* 寄存器编号 低字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _value >> 8;		/* 寄存器值 高字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _value;			/* 寄存器值 低字节 */
-	
-	MODH_SendAckWithCRC();		/* 发送数据，自动加CRC */
-	
-	g_tModH.fAck06H = 0;		/* 如果收到从机的应答，则这个标志会设为1 */
-}
-#endif 
-/*
-*********************************************************************************************************
-*	函 数 名: MODH_Send10H
-*	功能说明: 发送10H指令，连续写多个保持寄存器. 最多一次支持23个寄存器。
-*	形    参: _addr : 从站地址
-*			  _reg : 寄存器编号
-*			  _num : 寄存器个数n (每个寄存器2个字节) 值域
-*			  _buf : n个寄存器的数据。长度 = 2 * n
-*	返 回 值: 无
-*********************************************************************************************************
-*/
-// void MODH_Send10H(uint8_t _addr, uint16_t _reg, uint8_t _num, uint8_t *_buf)
-// {
-// 	uint16_t i;
-	
-// 	g_tModH.TxCount = 0;
-// 	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 */
-// 	g_tModH.TxBuf[g_tModH.TxCount++] = 0x10;		/* 从站地址 */	
-// 	g_tModH.TxBuf[g_tModH.TxCount++] = _reg >> 8;	/* 寄存器编号 高字节 */
-// 	g_tModH.TxBuf[g_tModH.TxCount++] = _reg;		/* 寄存器编号 低字节 */
-// 	g_tModH.TxBuf[g_tModH.TxCount++] = _num >> 8;	/* 寄存器个数 高字节 */
-// 	g_tModH.TxBuf[g_tModH.TxCount++] = _num;		/* 寄存器个数 低字节 */
-// 	g_tModH.TxBuf[g_tModH.TxCount++] = 2 * _num;	/* 数据字节数 */
-	
-// 	for (i = 0; i < 2 * _num; i++)
-// 	{
-// 		if (g_tModH.TxCount > H_RX_BUF_SIZE - 3)
-// 		{
-// 			return;		/* 数据超过缓冲区超度，直接丢弃不发送 */
-// 		}
-// 		g_tModH.TxBuf[g_tModH.TxCount++] = _buf[i];		/* 后面的数据长度 */
-// 	}
-	
-// 	MODH_SendAckWithCRC();	/* 发送数据，自动加CRC */
-// }
-
-
 /*
 *********************************************************************************************************
 *	函 数 名: MODH_RxTimeOut
@@ -384,11 +274,11 @@ void MODH_Poll(void)
 {	
 	uint16_t crc1;
 	
-	if (g_modh_timeout == 0)	/* 超过3.5个字符时间后执行MODH_RxTimeOut()函数。全局变量 g_rtu_timeout = 1 */
-	{
-		/* 没有超时，继续接收。不要清零 g_tModH.RxCount */
-		return ;
-	}
+//	if (g_modh_timeout == 0)	/* 超过3.5个字符时间后执行MODH_RxTimeOut()函数。全局变量 g_rtu_timeout = 1 */
+//	{
+//		/* 没有超时，继续接收。不要清零 g_tModH.RxCount */
+//		return ;
+//	}
 
 	/* 收到命令
 		05 06 00 88 04 57 3B70 (8 字节)
@@ -402,7 +292,7 @@ void MODH_Poll(void)
 
 	/* 接收到的数据小于4个字节就认为错误，地址（8bit）+指令（8bit）+操作寄存器（16bit） */
 	/* 发送地址+本地地址+功能码+数据长度+数据+CRC16(2BYTE)*/
-	if (g_tModH.RxCount < 4)
+	if (g_tModH.RxCount < 5)
 	{
 		goto err_ret;
 	}
@@ -429,201 +319,96 @@ err_ret:
 *	返 回 值: 无
 *********************************************************************************************************
 */
-static void MODH_Read_01H(void)
+static void MODH_Read_Address_01H(void)
 {
-	uint8_t bytes;
-	uint8_t *p;
+	uint8_t bytes,fun_byte;
+	
 	
 	if (g_tModH.RxCount > 0)
 	{
 		bytes = g_tModH.RxBuf[2];	/* 数据长度 字节数 */				
-		switch (g_tModH.Reg01H)
+		switch (bytes)
 		{
-			case REG_D01:
-				if (bytes == 1)
-				{
-					p = &g_tModH.RxBuf[3];	
+			case mod_power: //0x0101
+				
+				fun_byte = g_tModH.RxBuf[4]; //read rs485 data 	
+				switch(fun_byte){
+
+                   case 0:
+                       run_t.RunCommand_Label= POWER_OFF;
+				   break;
+
+				   case 1:
+				      run_t.RunCommand_Label= POWER_ON;
+
+				   break;
+
+				}	
 					
-					g_tVar.D01 = BEBufToUint16(p); p += 2;	/* 寄存器 */	
-					g_tVar.D02 = BEBufToUint16(p); p += 2;	/* 寄存器 */	
-					g_tVar.D03 = BEBufToUint16(p); p += 2;	/* 寄存器 */	
-					g_tVar.D04 = BEBufToUint16(p); p += 2;	/* 寄存器 */
-					
-					g_tModH.fAck01H = 1;
-				}
-				break;
+				g_tModH.fAck01H = 1;
+				
+			break;
+
+			case mod_ptc:
+			   fun_byte = g_tModH.RxBuf[4]; //read rs485 data
+			   switch(fun_byte){
+
+                   case 0:
+                      run_t.gDry = 0;
+				   break;
+
+				   case 1:
+				      
+					run_t.gDry = 1;
+				   break;
+
+				}	
+                g_tModH.fAck02H = 1;
+			break;
+
+			case mod_plasma:
+			    fun_byte = g_tModH.RxBuf[4]; //read rs485 data 	
+			     switch(fun_byte){
+
+                   case 0:
+                     run_t.gPlasma=0; 
+				   break;
+
+				   case 1:
+				      
+				    run_t.gPlasma=1;
+
+				   break;
+
+				}	
+                g_tModH.fAck03H = 1;
+
+			break;
+
+			case mod_ulrasonic:
+				fun_byte = g_tModH.RxBuf[4]; //read rs485 data 	
+				 switch(fun_byte){
+
+                   case 0:
+                       run_t.ultrasonic = 0;
+				   break;
+
+				   case 1:
+				     run_t.ultrasonic = 1;
+
+				   break;
+
+				}	
+                g_tModH.fAck04H = 1;
+
+			break;
+
+			case mod_fan:
+
+			break;
 		}
 	}
 }
-
-/*
-*********************************************************************************************************
-*	函 数 名: MODH_Read_02H
-*	功能说明: 分析02H指令的应答数据，读取输入状态，bit访问
-*	形    参: 无
-*	返 回 值: 无
-*********************************************************************************************************
-*/
-static void MODH_Read_02H(void)
-{
-	uint8_t bytes;
-	uint8_t *p;
-	
-	if (g_tModH.RxCount > 0)
-	{
-		bytes = g_tModH.RxBuf[2];	/* 数据长度 字节数 */				
-		switch (g_tModH.Reg02H)
-		{
-			case REG_T01:
-				if (bytes == 6)
-				{
-					p = &g_tModH.RxBuf[3];	
-					
-					g_tVar.T01 = BEBufToUint16(p); p += 2;	/* 寄存器 */	
-					g_tVar.T02 = BEBufToUint16(p); p += 2;	/* 寄存器 */	
-					g_tVar.T03 = BEBufToUint16(p); p += 2;	/* 寄存器 */	
-					
-					g_tModH.fAck02H = 1;
-				}
-				break;
-		}
-	}
-}
-
-/*
-*********************************************************************************************************
-*	函 数 名: MODH_Read_04H
-*	功能说明: 分析04H指令的应答数据，读取输入寄存器，16bit访问
-*	形    参: 无
-*	返 回 值: 无
-*********************************************************************************************************
-*/
-static void MODH_Read_04H(void)
-{
-	uint8_t bytes;
-	uint8_t *p;
-	
-	if (g_tModH.RxCount > 0)
-	{
-		bytes = g_tModH.RxBuf[2];	/* 数据长度 字节数 */				
-		switch (g_tModH.Reg04H)
-		{
-			case REG_A01:
-				if (bytes == 2)
-				{
-					p = &g_tModH.RxBuf[3];	
-					
-					g_tVar.A01 = BEBufToUint16(p); p += 2;	/* 寄存器 */	
-					
-					g_tModH.fAck04H = 1;
-				}
-				break;
-		}
-	}
-}
-
-/*
-*********************************************************************************************************
-*	函 数 名: MODH_Read_05H
-*	功能说明: 分析05H指令的应答数据，写入线圈状态，bit访问
-*	形    参: 无
-*	返 回 值: 无
-*********************************************************************************************************
-*/
-static void MODH_Read_05H(void)
-{
-	if (g_tModH.RxCount > 0)
-	{
-		if (g_tModH.RxBuf[0] == SlaveAddr_1)		
-		{
-			g_tModH.fAck05H = 1;		/* 接收到应答 */
-		}
-	};
-}
-
-/*
-*********************************************************************************************************
-*	函 数 名: MODH_Read_06H
-*	功能说明: 分析06H指令的应答数据，写单个保存寄存器，16bit访问
-*	形    参: 无
-*	返 回 值: 无
-*********************************************************************************************************
-*/
-static void MODH_Read_06H(void)
-{
-	if (g_tModH.RxCount > 0)
-	{
-		if (g_tModH.RxBuf[0] == SlaveAddr_1)		
-		{
-			g_tModH.fAck06H = 1;		/* 接收到应答 */
-		}
-	}
-}
-
-
-/*
-*********************************************************************************************************
-*	函 数 名: MODH_Read_03H
-*	功能说明: 分析03H指令的应答数据，读取保持寄存器，16bit访问
-*	形    参: 无
-*	返 回 值: 无
-*********************************************************************************************************
-*/
-void MODH_Read_03H(void)
-{
-	uint8_t bytes;
-	uint8_t *p;
-	
-	if (g_tModH.RxCount > 0)
-	{
-		bytes = g_tModH.RxBuf[2];	/* 数据长度 字节数 */				
-		switch (g_tModH.Reg03H)
-		{
-			case REG_P01: //0x0301
-				if (bytes == 4)
-				{
-					p = &g_tModH.RxBuf[3];	
-					
-					g_tVar.P01 = BEBufToUint16(p); p += 2;	/* 寄存器 */	
-					g_tVar.P02 = BEBufToUint16(p); p += 2;	/* 寄存器 */	
-		
-					g_tModH.fAck03H = 1;
-				}
-				break;
-		}
-	}
-}
-
-/*
-*********************************************************************************************************
-*	函 数 名: MODH_Read_10H
-*	功能说明: 分析10H指令的应答数据，写多个保存寄存器，16bit访问
-*	形    参: 无
-*	返 回 值: 无
-*********************************************************************************************************
-*/
-void MODH_Read_10H(void)
-{
-	/*
-		10H指令的应答:
-			从机地址                   11
-			功能码                     10
-			寄存器起始地址高字节		00
-			寄存器起始地址低字节    	01
-			寄存器数量高字节            00
-			寄存器数量低字节            02
-			CRC校验高字节              12
-			CRC校验低字节              98
-	*/
-	if (g_tModH.RxCount > 0)
-	{
-		if (g_tModH.RxBuf[0] == SlaveAddr_1)		
-		{
-			g_tModH.fAck10H = 1;		/* 接收到应答 */
-		}
-	}
-}
-
 /*
 *********************************************************************************************************
 *	函 数 名: MODH_ReadParam_01H
@@ -632,7 +417,7 @@ void MODH_Read_10H(void)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_ReadParam_01H(uint16_t _reg, uint16_t _num)
+uint8_t MODH_ReadParam_Power_01H(uint8_t add,uint8_t _reg, uint8_t _num)
 {
 	int32_t time1;
 	uint8_t i;
@@ -640,6 +425,7 @@ uint8_t MODH_ReadParam_01H(uint16_t _reg, uint16_t _num)
 	for (i = 0; i < NUM; i++)
 	{
 		//MODH_Send01H (SlaveAddr_1, _reg, _num);		  /* 发送命令 */
+		MODH_Send00H_Power_OnOff(add,_num,_reg);
 		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
 		
 		while (1)				/* 等待应答,超时或接收到应答则break  */
@@ -681,7 +467,7 @@ uint8_t MODH_ReadParam_01H(uint16_t _reg, uint16_t _num)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_ReadParam_02H(uint16_t _reg, uint16_t _num)
+uint8_t MODH_ReadParam_PTC_02H(uint8_t add,uint8_t _reg, uint8_t _num)
 {
 	int32_t time1;
 	uint8_t i;
@@ -689,6 +475,7 @@ uint8_t MODH_ReadParam_02H(uint16_t _reg, uint16_t _num)
 	for (i = 0; i < NUM; i++)
 	{
 		//MODH_Send02H (SlaveAddr_1, _reg, _num);
+		MODH_Send00H_Ptc_OnOff(add,_num,_reg);
 		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
 		
 		while (1)
@@ -729,7 +516,7 @@ uint8_t MODH_ReadParam_02H(uint16_t _reg, uint16_t _num)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_ReadParam_03H(uint16_t _reg, uint16_t _num)
+uint8_t MODH_ReadParam_Plasma_03H(uint8_t add,uint8_t _reg, uint8_t _num)
 {
 	int32_t time1;
 	uint8_t i;
@@ -737,6 +524,7 @@ uint8_t MODH_ReadParam_03H(uint16_t _reg, uint16_t _num)
 	for (i = 0; i < NUM; i++)
 	{
 		//MODH_Send03H (SlaveAddr_1, _reg, _num);
+		MODH_Send00H_Plasma_OnOff(add,_num,_reg);
 		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
 		
 		while (1)
@@ -779,7 +567,7 @@ uint8_t MODH_ReadParam_03H(uint16_t _reg, uint16_t _num)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_ReadParam_04H(uint16_t _reg, uint16_t _num)
+uint8_t MODH_ReadParam_Ultrasonic_04H(uint8_t add,uint8_t _reg, uint8_t _num)
 {
 	int32_t time1;
 	uint8_t i;
@@ -787,6 +575,7 @@ uint8_t MODH_ReadParam_04H(uint16_t _reg, uint16_t _num)
 	for (i = 0; i < NUM; i++)
 	{
 		//MODH_Send04H (SlaveAddr_1, _reg, _num);
+		MODH_Send00H_Ultrasonic_OnOff(add,_num,_reg);
 		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
 		
 		while (1)
@@ -827,47 +616,47 @@ uint8_t MODH_ReadParam_04H(uint16_t _reg, uint16_t _num)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_WriteParam_05H(uint16_t _reg, uint16_t _value)
-{
-	int32_t time1;
-	uint8_t i;
+//uint8_t MODH_WriteParam_05H(uint16_t _reg, uint16_t _value)
+//{
+//	int32_t time1;
+//	uint8_t i;
 
-	for (i = 0; i < NUM; i++)
-	{
-		//MODH_Send05H (SlaveAddr_1, _reg, _value);
-		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-		
-		while (1)
-		{
-			bsp_Idle();
-			
-			/* 超时大于 TIMEOUT，则认为异常 */
-			if (bsp_CheckRunTime(time1) > TIMEOUT)		
-			{
-				break;	/* 通信超时了 */
-			}
-			
-			if (g_tModH.fAck05H > 0)
-			{
-				break;
-			}
-		}
-		
-		if (g_tModH.fAck05H > 0)
-		{
-			break;
-		}
-	}
-	
-	if (g_tModH.fAck05H == 0)
-	{
-		return 0;	/* 通信超时了 */
-	}
-	else
-	{
-		return 1;	/* 05H 写成功 */
-	}
-}
+//	for (i = 0; i < NUM; i++)
+//	{
+//		//MODH_Send05H (SlaveAddr_1, _reg, _value);
+//		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
+//		
+//		while (1)
+//		{
+//			bsp_Idle();
+//			
+//			/* 超时大于 TIMEOUT，则认为异常 */
+//			if (bsp_CheckRunTime(time1) > TIMEOUT)		
+//			{
+//				break;	/* 通信超时了 */
+//			}
+//			
+//			if (g_tModH.fAck05H > 0)
+//			{
+//				break;
+//			}
+//		}
+//		
+//		if (g_tModH.fAck05H > 0)
+//		{
+//			break;
+//		}
+//	}
+//	
+//	if (g_tModH.fAck05H == 0)
+//	{
+//		return 0;	/* 通信超时了 */
+//	}
+//	else
+//	{
+//		return 1;	/* 05H 写成功 */
+//	}
+//}
 
 /*
 *********************************************************************************************************
@@ -877,46 +666,46 @@ uint8_t MODH_WriteParam_05H(uint16_t _reg, uint16_t _value)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_WriteParam_06H(uint16_t _reg, uint16_t _value)
-{
-	int32_t time1;
-	uint8_t i;
-	
-	for (i = 0; i < NUM; i++)
-	{	
-		//MODH_Send06H (SlaveAddr_1, _reg, _value);
-		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-				
-		while (1)
-		{
-			bsp_Idle();
-		
-			if (bsp_CheckRunTime(time1) > TIMEOUT)		
-			{
-				break;
-			}
-			
-			if (g_tModH.fAck06H > 0)
-			{
-				break;
-			}
-		}
-		
-		if (g_tModH.fAck06H > 0)
-		{
-			break;
-		}
-	}
-	
-	if (g_tModH.fAck06H == 0)
-	{
-		return 0;	/* 通信超时了 */
-	}
-	else
-	{
-		return 1;	/* 写入06H参数成功 */
-	}
-}
+//uint8_t MODH_WriteParam_06H(uint16_t _reg, uint16_t _value)
+//{
+//	int32_t time1;
+//	uint8_t i;
+//	
+//	for (i = 0; i < NUM; i++)
+//	{	
+//		//MODH_Send06H (SlaveAddr_1, _reg, _value);
+//		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
+//				
+//		while (1)
+//		{
+//			bsp_Idle();
+//		
+//			if (bsp_CheckRunTime(time1) > TIMEOUT)		
+//			{
+//				break;
+//			}
+//			
+//			if (g_tModH.fAck06H > 0)
+//			{
+//				break;
+//			}
+//		}
+//		
+//		if (g_tModH.fAck06H > 0)
+//		{
+//			break;
+//		}
+//	}
+//	
+//	if (g_tModH.fAck06H == 0)
+//	{
+//		return 0;	/* 通信超时了 */
+//	}
+//	else
+//	{
+//		return 1;	/* 写入06H参数成功 */
+//	}
+//}
 
 /*
 *********************************************************************************************************
@@ -926,45 +715,119 @@ uint8_t MODH_WriteParam_06H(uint16_t _reg, uint16_t _value)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t *_buf)
+//uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t *_buf)
+//{
+//	int32_t time1;
+//	uint8_t i;
+//	
+//	for (i = 0; i < NUM; i++)
+//	{	
+//		//MODH_Send10H(SlaveAddr_1, _reg, _num, _buf);
+//		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
+//				
+//		while (1)
+//		{
+//			bsp_Idle();
+//		
+//			if (bsp_CheckRunTime(time1) > TIMEOUT)		
+//			{
+//				break;
+//			}
+//			
+//			if (g_tModH.fAck10H > 0)
+//			{
+//				break;
+//			}
+//		}
+//		
+//		if (g_tModH.fAck10H > 0)
+//		{
+//			break;
+//		}
+//	}
+//	
+//	if (g_tModH.fAck10H == 0)
+//	{
+//		return 0;	/* 通信超时了 */
+//	}
+//	else
+//	{
+//		return 1;	/* 写入10H参数成功 */
+//	}
+//}
+
+/*********************************************************************************************************
+*	函 数 名: MODH_WriteParam_10H
+*	功能说明: 单个参数. 通过发送10H指令实现，发送之后，等待从机应答。循环NUM次写命令
+*	形    参: 无
+*	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
+*********************************************************************************************************/
+void RS485_Host_Communication_Handler(void)
 {
-	int32_t time1;
-	uint8_t i;
-	
-	for (i = 0; i < NUM; i++)
-	{	
-		//MODH_Send10H(SlaveAddr_1, _reg, _num, _buf);
-		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-				
-		while (1)
-		{
-			bsp_Idle();
+
+    static uint8_t rs485_run_flag,dry_flag=0xff,plasma_flag=0xff; 
+	static uint8_t  dry_off_flag=0xff,plasma_off_flag =0xff;
+	 switch(run_t.rs485_Command_tag){
+
+
+	 case POWER_ON:
+	 	 
+	    MODH_ReadParam_Power_01H(0x00,0x01,5);
+	    MODH_Poll();
+	    rs485_run_flag =1;
+
+
+	 break;
+     case POWER_OFF:
+
+	 	MODH_ReadParam_Power_01H(0x00,0x00,5);
+		MODH_Poll();
+		rs485_run_flag =0;
+	 
+
+	 break;
+
+
+	}
+     
+    if(rs485_run_flag ==1){
+
+	   
+   
+	   if(run_t.gDry ==1 && (dry_flag !=run_t.rs485_send_times)){
+
+	       dry_flag = run_t.rs485_send_times;
+
+		   MODH_ReadParam_PTC_02H(0x00,0x01,5);
+		   
+
+		}
+		else if(run_t.gDry ==0 && (dry_off_flag !=run_t.rs485_send_times)){
+			dry_off_flag =run_t.rs485_send_times;
+		   MODH_ReadParam_PTC_02H(0x00,0x00,5);
 		
-			if (bsp_CheckRunTime(time1) > TIMEOUT)		
-			{
-				break;
-			}
+
+		}
+
+
+		if(run_t.gPlasma ==1 && (plasma_flag !=run_t.rs485_send_times)){
+			  plasma_flag = run_t.rs485_send_times;
+          
+		     MODH_ReadParam_Plasma_03H(0x00,0x01,5);
+
+
+		}
+		else if(run_t.gPlasma ==0 && (plasma_off_flag !=run_t.rs485_send_times)){
 			
-			if (g_tModH.fAck10H > 0)
-			{
-				break;
-			}
+		   plasma_off_flag = run_t.rs485_send_times;
+
+		   MODH_ReadParam_Plasma_03H(0x00,0x00,5);
+
+
 		}
-		
-		if (g_tModH.fAck10H > 0)
-		{
-			break;
-		}
-	}
-	
-	if (g_tModH.fAck10H == 0)
-	{
-		return 0;	/* 通信超时了 */
-	}
-	else
-	{
-		return 1;	/* 写入10H参数成功 */
-	}
+
+   }
+
 }
 
 

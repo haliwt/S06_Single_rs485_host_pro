@@ -82,8 +82,8 @@ void Error_Handler(void);
 #define RELAY_Pin 							GPIO_PIN_0
 #define RELAY_GPIO_Port 					GPIOB
 
-#define TEMP_Pin 							GPIO_PIN_13
-#define TEMP_GPIO_Port 						GPIOB
+#define TEMP_Pin 							GPIO_PIN_5
+#define TEMP_GPIO_Port 						GPIOA
 
 #define UL_Pin 								GPIO_PIN_8
 #define UL_GPIO_Port 						GPIOA

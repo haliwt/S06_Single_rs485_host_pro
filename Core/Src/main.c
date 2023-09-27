@@ -133,11 +133,12 @@ int main(void)
     
     }
 	Display_Decode_Function();
-    MODH_Poll();
+	//MODH_Poll();
     if(run_t.decodeFlag ==0){
       RunCommand_MainBoard_Fun();
 	  
     }
+	//RS485_Host_Communication_Handler();
     USART1_Cmd_Error_Handler(&huart1);
 	
   }

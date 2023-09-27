@@ -1,5 +1,5 @@
-#ifndef __MODEBUS_HOST_H_
-#define __MODEBUS_HOST_H_
+#ifndef __MODBUS_HOST_H_
+#define __MODBUS_HOST_H_
 #include "main.h"
 
 
@@ -55,10 +55,23 @@
 #define H_TX_BUF_SIZE      	128
 
 #if UART2_FIFO_EN == 1
-	#define UART3_BAUD			115200
+	#define UART2_BAUD			9600
 	#define UART3_TX_BUF_SIZE	1*1024
 	#define UART3_RX_BUF_SIZE	1*1024
 #endif
+
+typedef enum {
+
+  mod_power =0x01,
+  mod_ptc,
+  mod_plasma,
+  mod_ulrasonic,
+  mod_fan
+   
+}_mod_fun;
+
+typedef enum _mod_fun mod_fun_codes;
+
 
 typedef struct
 {
@@ -72,10 +85,10 @@ typedef struct
 	uint8_t TxBuf[H_TX_BUF_SIZE];
 	uint8_t TxCount;
 	
-	uint16_t Reg01H;		/* 保存主机发送的寄存器首地址 */
-	uint16_t Reg02H;
-	uint16_t Reg03H;		
-	uint16_t Reg04H;
+	uint8_t mod_power;//Reg01H;		/* 保存主机发送的寄存器首地址 */
+	uint8_t mod_ptc;//Reg02H;
+	uint8_t mod_plasma;//Reg03H;		
+	uint8_t mod_fan;//Reg04H;
 
 	uint8_t RegNum;			/* 寄存器个数 */
 
@@ -116,14 +129,15 @@ typedef struct
 
 
 void MODH_Poll(void);
-uint8_t MODH_ReadParam_01H(uint16_t _reg, uint16_t _num);
-uint8_t MODH_ReadParam_02H(uint16_t _reg, uint16_t _num);
-uint8_t MODH_ReadParam_03H(uint16_t _reg, uint16_t _num);
-uint8_t MODH_ReadParam_04H(uint16_t _reg, uint16_t _num);
+uint8_t MODH_ReadParam_Power_01H(uint8_t add,uint8_t _reg, uint8_t _num);
+uint8_t MODH_ReadParam_PTC_02H(uint8_t add,uint8_t _reg, uint8_t _num);
+uint8_t MODH_ReadParam_Plasma_03H(uint8_t add,uint8_t _reg, uint8_t _num);
+uint8_t MODH_ReadParam_Ultrasonic_04H(uint8_t add,uint8_t _reg, uint8_t _num);
 uint8_t MODH_WriteParam_05H(uint16_t _reg, uint16_t _value);
 uint8_t MODH_WriteParam_06H(uint16_t _reg, uint16_t _value);
 uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t *_buf);
-//void Modbus_Communication_Handler(void);
+void RS485_Host_Communication_Handler(void);
+
 
 
 

@@ -119,6 +119,7 @@ typedef struct _RUN_T{
     uint8_t power_on_send_data_flag;
     uint8_t gTimer_usart_error_2;
 	uint8_t interval_time_stop_run;
+	
 
  
  
@@ -137,9 +138,12 @@ typedef struct _RUN_T{
 
 	//adc 
 	uint8_t ADC_channel_No;
-      
+	//rs485
+	uint8_t rs485_Command_tag;
+    uint8_t  rs485_send_times;
 
       uint8_t  gPlasma;
+	  uint8_t  ultrasonic;
      
 	 
 	  uint8_t  gUltrasonic;

@@ -54,6 +54,7 @@ void MX_TIM16_Init(void);
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 int32_t bsp_GetRunTime(void);
+int32_t bsp_CheckRunTime(int32_t _LastTime);
 
 /* USER CODE BEGIN Prototypes */
 

@@ -16,7 +16,7 @@
 
 static void UartVarInit(void);
 
-static void InitHardUart(void);
+//static void InitHardUart(void);
 static void UartSend(UART_T *_pUart, uint8_t *_ucaBuf, uint16_t _usLen);
 static uint8_t UartGetChar(UART_T *_pUart, uint8_t *_pByte);
 static void UartIRQ(UART_T *_pUart);
@@ -345,7 +345,7 @@ void MODH_ReciveNew(uint8_t _data)
 		两个数据包之间只能靠时间间隔来区分，Modbus定义在不同的波特率下，间隔时间是不一样的，
 		详情看此C文件开头
 	*/
-	uint8_t i;
+	//uint8_t i;
 	
 	/* 根据波特率，获取需要延迟的时间 */
 //	for(i = 0; i < (sizeof(ModbusBaudRate)/sizeof(ModbusBaudRate[0])); i++)

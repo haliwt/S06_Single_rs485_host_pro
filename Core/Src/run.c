@@ -37,7 +37,7 @@ uint8_t no_buzzer_sound_dry_off;
 **********************************************************************/
 void Decode_RunCmd(void)
 {
-  uint16_t count_total_times;
+
 //  uint8_t count_rem_times_one,count_rem_times_two;
   uint8_t cmdType_1=inputCmd[0],cmdType_2 = inputCmd[1];
 
@@ -147,7 +147,7 @@ static void Single_Power_ReceiveCmd(uint8_t cmd)
 		run_t.buzzer_sound_flag=0;
 		//Answering_Signal_USART1_Handler(COMMAND_ID,ANSWER_POWER_OFF);
 	   run_t.RunCommand_Label= POWER_OFF;
-
+       run_t.rs485_Command_tag =  POWER_OFF;
  
 
     cmd = 0xff;
@@ -164,6 +164,7 @@ static void Single_Power_ReceiveCmd(uint8_t cmd)
 		 // printf("pon\n");
         //Answering_Signal_USART1_Handler(COMMAND_ID,ANSWER_POWER_ON);
 		run_t.RunCommand_Label= POWER_ON;
+		run_t.rs485_Command_tag =  POWER_ON;
 		
 
 		 
@@ -205,9 +206,8 @@ static void Single_Command_ReceiveCmd(uint8_t cmd)
 		  	    Buzzer_KeySound();
 		  }
 		  else no_buzzer_sound_dry_off=0;
+		  run_t.rs485_send_times++;
 		
-		   
-		 
        break;
 
 	   case DRY_OFF_NO_BUZZER :
@@ -222,7 +222,7 @@ static void Single_Command_ReceiveCmd(uint8_t cmd)
             }
 			else no_buzzer_sound_dry_off=0;
 		
-			
+			 run_t.rs485_send_times++;
 		
 			   
        break;
@@ -230,21 +230,21 @@ static void Single_Command_ReceiveCmd(uint8_t cmd)
        case PLASMA_ON:
        		run_t.gPlasma=1;
 		    Buzzer_KeySound();
-	  
+	        run_t.rs485_send_times++;
 	    
        break;
 
        case PLASM_ON_NO_BUZZER:
      
            run_t.gPlasma=1;
-
+           
 
        break;
 
        case PLASM_OFF_NO_BUZZER:
           
            run_t.gPlasma=0;
-
+           run_t.rs485_send_times++;
        break;
 
        
@@ -253,7 +253,7 @@ static void Single_Command_ReceiveCmd(uint8_t cmd)
            run_t.gPlasma=0;
 		   Buzzer_KeySound();
 	
-	   
+	       run_t.rs485_send_times++;
        break;
 
        case  FAN_LEVEL_MIN: //this is fan_speed_min, run_t.gFan_level = fan_speed_min;

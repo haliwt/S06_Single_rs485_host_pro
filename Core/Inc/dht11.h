@@ -6,8 +6,8 @@
 #define DHT11_DATA_IO_IN()      {GPIOB->MODER&=0XFFFFFFFC;GPIOB->MODER|=0<<0;}  //0x00 input mode
 #define DHT11_DATA_IO_OUT()     {GPIOB->MODER&=0XFFFFFFFC;GPIOB->MODER|=1<<0;}   //0x01 output  mode 
 
-#define DHT11_DATA      GPIO_PIN_13
-#define DHT11_GPIO      GPIOB
+#define DHT11_DATA      GPIO_PIN_5
+#define DHT11_GPIO      GPIOA
 
 #define DHT11_DATA_SetHigh()            HAL_GPIO_WritePin(DHT11_GPIO,DHT11_DATA,GPIO_PIN_SET)    // output high level
 #define DHT11_DATA_SetLow()             HAL_GPIO_WritePin(DHT11_GPIO,DHT11_DATA,GPIO_PIN_RESET)    // output low level
@@ -16,9 +16,9 @@
 
 /* �궨�� -------------------------------------------------------------------*/
 /***********************   DHT11 �������Ŷ���  **************************/
-#define DHT11_Dout_GPIO_CLK_ENABLE()              __HAL_RCC_GPIOB_CLK_ENABLE()//__HAL_RCC_GPIOA_CLK_ENABLE()
-#define DHT11_Dout_PORT                           GPIOB
-#define DHT11_Dout_PIN                            GPIO_PIN_13
+#define DHT11_Dout_GPIO_CLK_ENABLE()              __HAL_RCC_GPIOA_CLK_ENABLE()//__HAL_RCC_GPIOA_CLK_ENABLE()
+#define DHT11_Dout_PORT                           GPIOA
+#define DHT11_Dout_PIN                            GPIO_PIN_5
 
 /***********************   DHT11 �����궨��  ****************************/
 #define DHT11_Dout_LOW()                          HAL_GPIO_WritePin(DHT11_Dout_PORT, DHT11_Dout_PIN, GPIO_PIN_RESET)
