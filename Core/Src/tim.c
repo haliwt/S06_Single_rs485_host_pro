@@ -20,9 +20,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "tim.h"
 #include "run.h"
+#include "bsp.h"
 
 /* USER CODE BEGIN 0 */
-
+__IO int32_t g_iRunTime = 0;
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim1;
@@ -374,4 +375,25 @@ int32_t bsp_CheckRunTime(int32_t _LastTime)
 
 	return time_diff;
 }
+/*
+*********************************************************************************************************
+*	函 数 名: bsp_GetRunTime
+*	功能说明: 获取CPU运行时间，单位1ms。最长可以表示 24.85天，如果你的产品连续运行时间超过这个数，则必须考虑溢出问题
+*	形    参:  无
+*	返 回 值: CPU运行时间，单位1ms
+*********************************************************************************************************
+*/
+int32_t bsp_GetRunTime(void)
+{
+	int32_t runtime;
+
+	DISABLE_INT();  	/* 关中断 */
+
+	runtime = g_iRunTime;	/* 这个变量在Systick中断中被改写，因此需要关中断进行保护 */
+
+	ENABLE_INT();  		/* 开中断 */
+
+	return runtime;
+}
+
 /* USER CODE END 1 */

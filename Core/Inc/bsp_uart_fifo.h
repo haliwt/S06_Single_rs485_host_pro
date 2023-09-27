@@ -88,14 +88,13 @@ typedef struct
 	uint8_t Sending;			/* 正在发送中 */
 }UART_T;
 
-
+void bsp_InitUart(void);
 void comSendBuf(COM_PORT_E _ucPort, uint8_t *_ucaBuf, uint16_t _usLen);
 void comSendChar(COM_PORT_E _ucPort, uint8_t _ucByte);
 uint8_t comGetChar(COM_PORT_E _ucPort, uint8_t *_pByte);
 void comSendBuf(COM_PORT_E _ucPort, uint8_t *_ucaBuf, uint16_t _usLen);
 void comClearTxFifo(COM_PORT_E _ucPort);
 void comClearRxFifo(COM_PORT_E _ucPort);
-//void comSetBaud(COM_PORT_E _ucPort, uint32_t _BaudRate);
 void RS485_SendBuf(uint8_t *_ucaBuf, uint16_t _usLen);
 void RS485_SendStr(char *_pBuf);
 void RS485_SetBaud(uint32_t _baud);

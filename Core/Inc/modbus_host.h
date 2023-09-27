@@ -3,11 +3,11 @@
 #include "main.h"
 
 
-#define MasterAddr		0x0		/* 主机地址 */
-#define SlaveAddr_1		0x01		/* 1号分机,address */
-#define SlaveAddr_2		0x02		/* 2号分机 ,address*/
-#define SlaveAddr_3		0x03		/* 3号分机 ,address*/
-#define SlaveAddr_4		0x04		/* 4号分机 ,address*/
+#define MasterAddr		0x01		/* 主机地址 */
+#define SlaveAddr_1		0x02		/* 1号分机,address */
+#define SlaveAddr_2		0x03		/* 2号分机 ,address*/
+#define SlaveAddr_3		0x04		/* 3号分机 ,address*/
+#define SlaveAddr_4		0x05		/* 4号分机 ,address*/
 
 /*Function Codes*/
 #define FUN_POWER  		    0x01
@@ -115,7 +115,7 @@ typedef struct
 
 
 
-void Modbus_Poll(void);
+void MODH_Poll(void);
 uint8_t MODH_ReadParam_01H(uint16_t _reg, uint16_t _num);
 uint8_t MODH_ReadParam_02H(uint16_t _reg, uint16_t _num);
 uint8_t MODH_ReadParam_03H(uint16_t _reg, uint16_t _num);
@@ -123,7 +123,7 @@ uint8_t MODH_ReadParam_04H(uint16_t _reg, uint16_t _num);
 uint8_t MODH_WriteParam_05H(uint16_t _reg, uint16_t _value);
 uint8_t MODH_WriteParam_06H(uint16_t _reg, uint16_t _value);
 uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t *_buf);
-void Modbus_Communication_Handler(void);
+//void Modbus_Communication_Handler(void);
 
 
 

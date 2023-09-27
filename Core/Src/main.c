@@ -27,7 +27,7 @@
 #include "delay.h"
 #include "cmd_link.h"
 #include "run.h"
-
+#include "iwdg.h"
 #include "interrupt_manager.h"
 
 #include "buzzer.h"
@@ -106,15 +106,12 @@ int main(void)
   MX_ADC1_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-  
+  bsp_InitUart();
  // HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_1);
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim14);//HAL_TIM_Base_Start(&htim3);
   UART_Start_Receive_IT(&huart1,inputBuf,1);
-  //HAL_UART_Receive_IT(&huart2,usart_wifi_t.usart_wifi_data,1);
-  //UART_Start_Receive_IT(&huart2,usart_wifi_t.usart_wifi,sizeof(usart_wifi_t.usart_wifi)/sizeof(usart_wifi_t.usart_wifi[0]));
-  //__HAL_UART_ENABLE_IT(&huart2,UART_IT_RXNE);
-  //__HAL_UART_ENABLE_IT(&huart1,UART_IT_ERR);
+
   #if DEBUG
    printf("Initialize is over\n");
   #endif 
@@ -136,7 +133,7 @@ int main(void)
     
     }
 	Display_Decode_Function();
-    Modbus_Poll();
+    MODH_Poll();
     if(run_t.decodeFlag ==0){
       RunCommand_MainBoard_Fun();
 	  

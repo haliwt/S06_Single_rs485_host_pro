@@ -10,7 +10,7 @@
 #endif
 
 /* ���� BSP �汾�� */
-#define __STM32H7_BSP_VERSION		"1.1"
+#define __STM32G030_BSP_VERSION		"0.1"
 
 /* CPU����ʱִ�еĺ��� */
 //#define CPU_IDLE()		bsp_Idle()
@@ -56,6 +56,7 @@
 #include "bsp_uart_fifo.h"
 #include "usart.h"
 #include "iwdg.h"
+#include "tim.h"
 
 void bsp_Init(void);
 void bsp_Idle(void);

@@ -1,5 +1,17 @@
 #include "modbus_host.h"
 #include "bsp.h"
+
+/*
+   功能码： 0x01 ->power on or off
+           0x02 ->PTC open or off
+		   0x03 ->Plasma open or off
+		   0x04 ->ultrasonic open or off 
+		   0x05 ->fan open or off 
+		   0xfe -> fan is fault
+		   0xff -> ptc is fault
+
+
+*/
 /*
 *********************************************************************************************************
 *	                                   变量
@@ -47,6 +59,7 @@ VAR_T g_tVar;
 
 static void MODH_RxTimeOut(void);
 static void MODH_AnalyzeApp(void);
+
 
 static void MODH_Read_01H(void);
 static void MODH_Read_02H(void);
@@ -101,38 +114,62 @@ static void MODH_AnalyzeApp(void)
 	switch (g_tModH.RxBuf[1])			/* 第2个字节 功能码 */
 	{
 		case 0x01:	/* 读取线圈状态 */
-			MODH_Read_01H();
+			//MODH_Read_01H();
 			break;
 
 		case 0x02:	/* 读取输入状态 */
-			MODH_Read_02H();
+			//MODH_Read_02H();
 			break;
 
 		case 0x03:	/* 读取保持寄存器 在一个或多个保持寄存器中取得当前的二进制值 */
-			MODH_Read_03H();
+			//MODH_Read_03H();
 			break;
 
 		case 0x04:	/* 读取输入寄存器 */
-			MODH_Read_04H();
+			//MODH_Read_04H();
 			break;
 
 		case 0x05:	/* 强制单线圈 */
-			MODH_Read_05H();
+			//MODH_Read_05H();
 			break;
 
 		case 0x06:	/* 写单个寄存器 */
-			MODH_Read_06H();
+			//MODH_Read_06H();
 			break;		
 
 		case 0x10:	/* 写多个寄存器 */
-			MODH_Read_10H();
+			//MODH_Read_10H();
 			break;
 		
 		default:
 			break;
 	}
 }
-
+/*
+*********************************************************************************************************
+*	函 数 名: MODH_Send00H
+*	功能说明: 发送00H指令，查询所有从机线圈寄存器 功能码 0x01
+*	形    参: _addr : 从站地址
+*			  _reg : 寄存器编号
+*			  _num : 寄存器个数
+*	返 回 值: 无
+*********************************************************************************************************
+*/
+void MODH_Send00H_Power_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _data)
+{
+	g_tModH.TxCount = 0;
+	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 发送地址 */
+	g_tModH.TxBuf[g_tModH.TxCount++] = MasterAddr;  /* 本地地址*/
+	g_tModH.TxBuf[g_tModH.TxCount++] = 0x01;		/* 功能码 开机或者关机 */	
+	g_tModH.TxBuf[g_tModH.TxCount++] = _data_len;	/* 数据长度*/
+	g_tModH.TxBuf[g_tModH.TxCount++] = _data;		/* 数据 */	
+	
+	
+	MODH_SendAckWithCRC();		/* 发送数据，自动加CRC */
+	g_tModH.fAck01H = 0;		/* 清接收标志 */
+	//g_tModH.RegNum = _num;		/* 寄存器个数 */
+	//g_tModH.Reg01H = _reg;		/* 保存01H指令中的寄存器地址，方便对应答数据进行分类 */	
+}
 /*
 *********************************************************************************************************
 *	函 数 名: MODH_Send01H
@@ -143,20 +180,19 @@ static void MODH_AnalyzeApp(void)
 *	返 回 值: 无
 *********************************************************************************************************
 */
-void MODH_Send01H(uint8_t _addr, uint16_t _reg, uint16_t _num)
+void MODH_Send00H_Ptc_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _data)
 {
 	g_tModH.TxCount = 0;
-	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = 0x01;		/* 功能码 */	
-	g_tModH.TxBuf[g_tModH.TxCount++] = _reg >> 8;	/* 寄存器编号 高字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _reg;		/* 寄存器编号 低字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _num >> 8;	/* 寄存器个数 高字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _num;		/* 寄存器个数 低字节 */
+	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 发送地址 */
+	g_tModH.TxBuf[g_tModH.TxCount++] = MasterAddr;  /* 本地地址*/
+	g_tModH.TxBuf[g_tModH.TxCount++] = 0x02;		/* 功能码 PTC加开或者关闭 */	
+	g_tModH.TxBuf[g_tModH.TxCount++] = _data_len;	/* 数据长度*/
+	g_tModH.TxBuf[g_tModH.TxCount++] = _data;		/* 数据 */	
 	
 	MODH_SendAckWithCRC();		/* 发送数据，自动加CRC */
 	g_tModH.fAck01H = 0;		/* 清接收标志 */
-	g_tModH.RegNum = _num;		/* 寄存器个数 */
-	g_tModH.Reg01H = _reg;		/* 保存01H指令中的寄存器地址，方便对应答数据进行分类 */	
+	//g_tModH.RegNum = _num;		/* 寄存器个数 */
+	//g_tModH.Reg01H = _reg;		/* 保存01H指令中的寄存器地址，方便对应答数据进行分类 */	
 }
 
 /*
@@ -169,46 +205,44 @@ void MODH_Send01H(uint8_t _addr, uint16_t _reg, uint16_t _num)
 *	返 回 值: 无
 *********************************************************************************************************
 */
-void MODH_Send02H(uint8_t _addr, uint16_t _reg, uint16_t _num)
+void MODH_Send00H_Plasma_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _data)
 {
 	g_tModH.TxCount = 0;
-	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = 0x02;		/* 功能码 */	
-	g_tModH.TxBuf[g_tModH.TxCount++] = _reg >> 8;	/* 寄存器编号 高字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _reg;		/* 寄存器编号 低字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _num >> 8;	/* 寄存器个数 高字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _num;		/* 寄存器个数 低字节 */
+	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 发送地址 */
+	g_tModH.TxBuf[g_tModH.TxCount++] = MasterAddr;  /* 本地地址*/
+	g_tModH.TxBuf[g_tModH.TxCount++] = 0x03;		/* 功能码 等离子开或者关闭 */	
+	g_tModH.TxBuf[g_tModH.TxCount++] = _data_len;	/* 数据长度*/
+	g_tModH.TxBuf[g_tModH.TxCount++] = _data;		/* 数据 */
 	
 	MODH_SendAckWithCRC();		/* 发送数据，自动加CRC */
 	g_tModH.fAck02H = 0;		/* 清接收标志 */
-	g_tModH.RegNum = _num;		/* 寄存器个数 */
-	g_tModH.Reg02H = _reg;		/* 保存02H指令中的寄存器地址，方便对应答数据进行分类 */	
+	//g_tModH.RegNum = _num;		/* 寄存器个数 */
+	//g_tModH.Reg02H = _reg;		/* 保存02H指令中的寄存器地址，方便对应答数据进行分类 */	
 }
 
 /*
 *********************************************************************************************************
 *	函 数 名: MODH_Send03H
-*	功能说明: 发送03H指令，查询1个或多个保持寄存器
+*	功能说明: 发送03H指令，打开或者关闭超声波
 *	形    参: _addr : 从站地址
 *			  _reg : 寄存器编号
 *			  _num : 寄存器个数
 *	返 回 值: 无
 *********************************************************************************************************
 */
-void MODH_Send03H(uint8_t _addr, uint16_t _reg, uint16_t _num)
+void MODH_Send00H_Ultrasonic_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _data)
 {
 	g_tModH.TxCount = 0;
-	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = 0x03;		/* 功能码 */	
-	g_tModH.TxBuf[g_tModH.TxCount++] = _reg >> 8;	/* 寄存器编号 高字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _reg;		/* 寄存器编号 低字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _num >> 8;	/* 寄存器个数 高字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _num;		/* 寄存器个数 低字节 */
+	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 发送地址 */
+	g_tModH.TxBuf[g_tModH.TxCount++] = MasterAddr;  /* 本地地址*/
+	g_tModH.TxBuf[g_tModH.TxCount++] = 0x04;		/* 功能码 超声波开或者关闭 */	
+	g_tModH.TxBuf[g_tModH.TxCount++] = _data_len;	/* 数据长度*/
+	g_tModH.TxBuf[g_tModH.TxCount++] = _data;		/* 数据 */
 	
 	MODH_SendAckWithCRC();		/* 发送数据，自动加CRC */
 	g_tModH.fAck03H = 0;		/* 清接收标志 */
-	g_tModH.RegNum = _num;		/* 寄存器个数 */
-	g_tModH.Reg03H = _reg;		/* 保存03H指令中的寄存器地址，方便对应答数据进行分类 */	
+	//g_tModH.RegNum = _num;		/* 寄存器个数 */
+	//g_tModH.Reg03H = _reg;		/* 保存03H指令中的寄存器地址，方便对应答数据进行分类 */	
 }
 
 /*
@@ -221,20 +255,19 @@ void MODH_Send03H(uint8_t _addr, uint16_t _reg, uint16_t _num)
 *	返 回 值: 无
 *********************************************************************************************************
 */
-void MODH_Send04H(uint8_t _addr, uint16_t _reg, uint16_t _num)
+void MODH_Send00H_Fan_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _data)
 {
 	g_tModH.TxCount = 0;
-	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = 0x04;		/* 功能码 */	
-	g_tModH.TxBuf[g_tModH.TxCount++] = _reg >> 8;	/* 寄存器编号 高字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _reg;		/* 寄存器编号 低字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _num >> 8;	/* 寄存器个数 高字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _num;		/* 寄存器个数 低字节 */
+	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 发送地址 */
+	g_tModH.TxBuf[g_tModH.TxCount++] = MasterAddr;  /* 本地地址*/
+	g_tModH.TxBuf[g_tModH.TxCount++] = 0x05;		/* 功能码 风扇开或者关闭 */	
+	g_tModH.TxBuf[g_tModH.TxCount++] = _data_len;	/* 数据长度*/
+	g_tModH.TxBuf[g_tModH.TxCount++] = _data;		/* 数据 */
 	
 	MODH_SendAckWithCRC();		/* 发送数据，自动加CRC */
 	g_tModH.fAck04H = 0;		/* 清接收标志 */
-	g_tModH.RegNum = _num;		/* 寄存器个数 */
-	g_tModH.Reg04H = _reg;		/* 保存04H指令中的寄存器地址，方便对应答数据进行分类 */	
+	//g_tModH.RegNum = _num;		/* 寄存器个数 */
+	//g_tModH.Reg04H = _reg;		/* 保存04H指令中的寄存器地址，方便对应答数据进行分类 */	
 }
 
 /*
@@ -247,7 +280,8 @@ void MODH_Send04H(uint8_t _addr, uint16_t _reg, uint16_t _num)
 *	返 回 值: 无
 *********************************************************************************************************
 */
-void MODH_Send05H(uint8_t _addr, uint16_t _reg, uint16_t _value)
+#if 0
+void MODH_Send05H(uint8_t _addr, uint8_t _data_len,uint8_t _data)
 {
 	g_tModH.TxCount = 0;
 	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;			/* 从站地址 */
@@ -261,7 +295,7 @@ void MODH_Send05H(uint8_t _addr, uint16_t _reg, uint16_t _value)
 
 	g_tModH.fAck05H = 0;		/* 如果收到从机的应答，则这个标志会设为1 */
 }
-
+#endif 
 /*
 *********************************************************************************************************
 *	函 数 名: MODH_Send06H
@@ -272,6 +306,7 @@ void MODH_Send05H(uint8_t _addr, uint16_t _reg, uint16_t _value)
 *	返 回 值: 无
 *********************************************************************************************************
 */
+#if 0
 void MODH_Send06H(uint8_t _addr, uint16_t _reg, uint16_t _value)
 {
 	g_tModH.TxCount = 0;
@@ -286,7 +321,7 @@ void MODH_Send06H(uint8_t _addr, uint16_t _reg, uint16_t _value)
 	
 	g_tModH.fAck06H = 0;		/* 如果收到从机的应答，则这个标志会设为1 */
 }
-
+#endif 
 /*
 *********************************************************************************************************
 *	函 数 名: MODH_Send10H
@@ -298,65 +333,31 @@ void MODH_Send06H(uint8_t _addr, uint16_t _reg, uint16_t _value)
 *	返 回 值: 无
 *********************************************************************************************************
 */
-void MODH_Send10H(uint8_t _addr, uint16_t _reg, uint8_t _num, uint8_t *_buf)
-{
-	uint16_t i;
+// void MODH_Send10H(uint8_t _addr, uint16_t _reg, uint8_t _num, uint8_t *_buf)
+// {
+// 	uint16_t i;
 	
-	g_tModH.TxCount = 0;
-	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = 0x10;		/* 从站地址 */	
-	g_tModH.TxBuf[g_tModH.TxCount++] = _reg >> 8;	/* 寄存器编号 高字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _reg;		/* 寄存器编号 低字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _num >> 8;	/* 寄存器个数 高字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = _num;		/* 寄存器个数 低字节 */
-	g_tModH.TxBuf[g_tModH.TxCount++] = 2 * _num;	/* 数据字节数 */
+// 	g_tModH.TxCount = 0;
+// 	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 */
+// 	g_tModH.TxBuf[g_tModH.TxCount++] = 0x10;		/* 从站地址 */	
+// 	g_tModH.TxBuf[g_tModH.TxCount++] = _reg >> 8;	/* 寄存器编号 高字节 */
+// 	g_tModH.TxBuf[g_tModH.TxCount++] = _reg;		/* 寄存器编号 低字节 */
+// 	g_tModH.TxBuf[g_tModH.TxCount++] = _num >> 8;	/* 寄存器个数 高字节 */
+// 	g_tModH.TxBuf[g_tModH.TxCount++] = _num;		/* 寄存器个数 低字节 */
+// 	g_tModH.TxBuf[g_tModH.TxCount++] = 2 * _num;	/* 数据字节数 */
 	
-	for (i = 0; i < 2 * _num; i++)
-	{
-		if (g_tModH.TxCount > H_RX_BUF_SIZE - 3)
-		{
-			return;		/* 数据超过缓冲区超度，直接丢弃不发送 */
-		}
-		g_tModH.TxBuf[g_tModH.TxCount++] = _buf[i];		/* 后面的数据长度 */
-	}
+// 	for (i = 0; i < 2 * _num; i++)
+// 	{
+// 		if (g_tModH.TxCount > H_RX_BUF_SIZE - 3)
+// 		{
+// 			return;		/* 数据超过缓冲区超度，直接丢弃不发送 */
+// 		}
+// 		g_tModH.TxBuf[g_tModH.TxCount++] = _buf[i];		/* 后面的数据长度 */
+// 	}
 	
-	MODH_SendAckWithCRC();	/* 发送数据，自动加CRC */
-}
+// 	MODH_SendAckWithCRC();	/* 发送数据，自动加CRC */
+// }
 
-/*
-*********************************************************************************************************
-*	函 数 名: MODH_ReciveNew
-*	功能说明: 串口接收中断服务程序会调用本函数。当收到一个字节时，执行一次本函数。
-*	形    参: 接收数据
-*	返 回 值: 1 表示有数据
-*********************************************************************************************************
-*/
-void MODH_ReciveNew(uint8_t _data)
-{
-	/*
-		3.5个字符的时间间隔，只是用在RTU模式下面，因为RTU模式没有开始符和结束符，
-		两个数据包之间只能靠时间间隔来区分，Modbus定义在不同的波特率下，间隔时间是不一样的，
-		详情看此C文件开头
-	*/
-	uint8_t i;
-	
-	/* 根据波特率，获取需要延迟的时间 */
-	for(i = 0; i < (sizeof(ModbusBaudRate)/sizeof(ModbusBaudRate[0])); i++)
-	{
-		if(HBAUD485 == ModbusBaudRate[i].Bps)
-		{
-			break;
-		}	
-	}
-
-	/* 硬件定时中断，硬件定时器1用于MODBUS从机, 定时器2用于MODBUS主机*/
-	bsp_StartHardTimer(2,  ModbusBaudRate[i].usTimeOut, (void *)MODH_RxTimeOut);
-
-	if (g_tModH.RxCount < H_RX_BUF_SIZE)
-	{
-		g_tModH.RxBuf[g_tModH.RxCount++] = _data;
-	}
-}
 
 /*
 *********************************************************************************************************
@@ -379,7 +380,7 @@ static void MODH_RxTimeOut(void)
 *	返 回 值: 0 表示无数据 1表示收到正确命令
 *********************************************************************************************************
 */
-void Modbus_Poll(void)
+void MODH_Poll(void)
 {	
 	uint16_t crc1;
 	
@@ -400,6 +401,7 @@ void Modbus_Poll(void)
 	g_modh_timeout = 0;
 
 	/* 接收到的数据小于4个字节就认为错误，地址（8bit）+指令（8bit）+操作寄存器（16bit） */
+	/* 发送地址+本地地址+功能码+数据长度+数据+CRC16(2BYTE)*/
 	if (g_tModH.RxCount < 4)
 	{
 		goto err_ret;
@@ -577,7 +579,7 @@ void MODH_Read_03H(void)
 		bytes = g_tModH.RxBuf[2];	/* 数据长度 字节数 */				
 		switch (g_tModH.Reg03H)
 		{
-			case REG_P01:
+			case REG_P01: //0x0301
 				if (bytes == 4)
 				{
 					p = &g_tModH.RxBuf[3];	
@@ -637,7 +639,7 @@ uint8_t MODH_ReadParam_01H(uint16_t _reg, uint16_t _num)
 	
 	for (i = 0; i < NUM; i++)
 	{
-		MODH_Send01H (SlaveAddr_1, _reg, _num);		  /* 发送命令 */
+		//MODH_Send01H (SlaveAddr_1, _reg, _num);		  /* 发送命令 */
 		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
 		
 		while (1)				/* 等待应答,超时或接收到应答则break  */
@@ -686,7 +688,7 @@ uint8_t MODH_ReadParam_02H(uint16_t _reg, uint16_t _num)
 	
 	for (i = 0; i < NUM; i++)
 	{
-		MODH_Send02H (SlaveAddr_1, _reg, _num);
+		//MODH_Send02H (SlaveAddr_1, _reg, _num);
 		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
 		
 		while (1)
@@ -734,7 +736,7 @@ uint8_t MODH_ReadParam_03H(uint16_t _reg, uint16_t _num)
 	
 	for (i = 0; i < NUM; i++)
 	{
-		MODH_Send03H (SlaveAddr_1, _reg, _num);
+		//MODH_Send03H (SlaveAddr_1, _reg, _num);
 		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
 		
 		while (1)
@@ -784,7 +786,7 @@ uint8_t MODH_ReadParam_04H(uint16_t _reg, uint16_t _num)
 	
 	for (i = 0; i < NUM; i++)
 	{
-		MODH_Send04H (SlaveAddr_1, _reg, _num);
+		//MODH_Send04H (SlaveAddr_1, _reg, _num);
 		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
 		
 		while (1)
@@ -832,7 +834,7 @@ uint8_t MODH_WriteParam_05H(uint16_t _reg, uint16_t _value)
 
 	for (i = 0; i < NUM; i++)
 	{
-		MODH_Send05H (SlaveAddr_1, _reg, _value);
+		//MODH_Send05H (SlaveAddr_1, _reg, _value);
 		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
 		
 		while (1)
@@ -882,7 +884,7 @@ uint8_t MODH_WriteParam_06H(uint16_t _reg, uint16_t _value)
 	
 	for (i = 0; i < NUM; i++)
 	{	
-		MODH_Send06H (SlaveAddr_1, _reg, _value);
+		//MODH_Send06H (SlaveAddr_1, _reg, _value);
 		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
 				
 		while (1)
@@ -931,7 +933,7 @@ uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t *_buf)
 	
 	for (i = 0; i < NUM; i++)
 	{	
-		MODH_Send10H(SlaveAddr_1, _reg, _num, _buf);
+		//MODH_Send10H(SlaveAddr_1, _reg, _num, _buf);
 		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
 				
 		while (1)

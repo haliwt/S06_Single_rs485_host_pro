@@ -20,8 +20,9 @@ static void InitHardUart(void);
 static void UartSend(UART_T *_pUart, uint8_t *_ucaBuf, uint16_t _usLen);
 static uint8_t UartGetChar(UART_T *_pUart, uint8_t *_pByte);
 static void UartIRQ(UART_T *_pUart);
-
-
+void RS485_SendBefor(void);
+void RS485_SendOver(void);
+void RS485_ReciveNew(uint8_t _byte);
 /*
 *********************************************************************************************************
 *	函 数 名: UartVarInit
@@ -62,11 +63,28 @@ static void UartVarInit(void)
 	g_tUart2.usRxRead = 0;						/* 接收FIFO读索引 */
 	g_tUart2.usRxCount = 0;						/* 接收到的新数据个数 */
 	g_tUart2.usTxCount = 0;						/* 待发送的数据个数 */
-	g_tUart2.SendBefor = 0;						/* 发送数据前的回调函数 */
-	g_tUart2.SendOver = 0;						/* 发送完毕后的回调函数 */
-	g_tUart2.ReciveNew = 0;						/* 接收到新数据后的回调函数 */
+	g_tUart2.SendBefor = RS485_SendBefor;		/* 发送数据前的回调函数 */
+	g_tUart2.SendOver = RS485_SendOver;			/* 发送完毕后的回调函数 */
+	g_tUart2.ReciveNew = RS485_ReciveNew;		/* 接收到新数据后的回调函数 */
 	g_tUart2.Sending = 0;						/* 正在发送中标志 */
 #endif
+}
+/*
+*********************************************************************************************************
+*	函 数 名: bsp_InitUart
+*	功能说明: 初始化串口硬件，并对全局变量赋初值.
+*	形    参: 无
+*	返 回 值: 无
+*********************************************************************************************************
+*/
+void bsp_InitUart(void)
+{
+	
+	UartVarInit();		/* 必须先初始化全局变量,再配置硬件 */
+
+	//InitHardUart();		/* 配置串口的硬件参数(波特率等) */
+
+	//RS485_InitTXE();	/* 配置RS485芯片的发送使能硬件，配置为推挽输出 */
 }
 /*
 *********************************************************************************************************
@@ -310,6 +328,41 @@ extern void MODH_ReciveNew(uint8_t _byte);
 void RS485_ReciveNew(uint8_t _byte)
 {
 	MODH_ReciveNew(_byte);
+}
+
+/*
+*********************************************************************************************************
+*	函 数 名: MODH_ReciveNew
+*	功能说明: 串口接收中断服务程序会调用本函数。当收到一个字节时，执行一次本函数。
+*	形    参: 接收数据
+*	返 回 值: 1 表示有数据
+*********************************************************************************************************
+*/
+void MODH_ReciveNew(uint8_t _data)
+{
+	/*
+		3.5个字符的时间间隔，只是用在RTU模式下面，因为RTU模式没有开始符和结束符，
+		两个数据包之间只能靠时间间隔来区分，Modbus定义在不同的波特率下，间隔时间是不一样的，
+		详情看此C文件开头
+	*/
+	uint8_t i;
+	
+	/* 根据波特率，获取需要延迟的时间 */
+//	for(i = 0; i < (sizeof(ModbusBaudRate)/sizeof(ModbusBaudRate[0])); i++)
+//	{
+//		if(HBAUD485 == ModbusBaudRate[i].Bps)
+//		{
+//			break;
+//		}	
+//	}
+
+	/* 硬件定时中断，硬件定时器1用于MODBUS从机, 定时器2用于MODBUS主机*/
+//	bsp_StartHardTimer(2,  ModbusBaudRate[i].usTimeOut, (void *)MODH_RxTimeOut);
+
+	if (g_tModH.RxCount < H_RX_BUF_SIZE)
+	{
+		g_tModH.RxBuf[g_tModH.RxCount++] = _data;
+	}
 }
 
 
