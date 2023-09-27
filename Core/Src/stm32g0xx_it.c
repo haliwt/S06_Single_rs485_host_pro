@@ -171,7 +171,7 @@ void USART1_IRQHandler(void)
 
   /* USER CODE END USART1_IRQn 1 */
 }
-
+#if 0
 /**
   * @brief This function handles USART2 global interrupt / USART2 wake-up interrupt through EXTI line 26.
   */
@@ -186,7 +186,7 @@ void USART2_IRQHandler(void)
   /* USER CODE END USART2_IRQn 1 */
 }
 
-
+#endif 
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */

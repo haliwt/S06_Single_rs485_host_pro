@@ -101,6 +101,7 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM3_Init(23,9,10); //100KHz
   MX_TIM14_Init();
+  MX_IWDG_Init();
  
   MX_ADC1_Init();
   MX_USART1_UART_Init();

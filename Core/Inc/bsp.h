@@ -55,6 +55,7 @@
 #include "bsp_msg.h"
 #include "bsp_uart_fifo.h"
 #include "usart.h"
+#include "iwdg.h"
 
 void bsp_Init(void);
 void bsp_Idle(void);

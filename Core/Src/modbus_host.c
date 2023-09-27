@@ -44,6 +44,7 @@ VAR_T g_tVar;
 *	                                   函数声明
 *********************************************************************************************************
 */
+
 static void MODH_RxTimeOut(void);
 static void MODH_AnalyzeApp(void);
 
@@ -963,4 +964,5 @@ uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t *_buf)
 		return 1;	/* 写入10H参数成功 */
 	}
 }
+
 

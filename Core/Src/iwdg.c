@@ -23,7 +23,7 @@ void MX_IWDG_Init(void)
   hiwdg.Init.Reload = 4095;
   if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
   {
-    Error_Handler();
+    //Error_Handler();
   }
   /* USER CODE BEGIN IWDG_Init 2 */
 

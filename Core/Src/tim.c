@@ -344,5 +344,34 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 }
 
 /* USER CODE BEGIN 1 */
+/*
+*********************************************************************************************************
+*	函 数 名: bsp_CheckRunTime
+*	功能说明: 计算当前运行时间和给定时刻之间的差值。处理了计数器循环。
+*	形    参:  _LastTime 上个时刻
+*	返 回 值: 当前时间和过去时间的差值，单位1ms
+*********************************************************************************************************
+*/
+int32_t bsp_CheckRunTime(int32_t _LastTime)
+{
+	int32_t now_time;
+	int32_t time_diff;
 
+	DISABLE_INT();  	/* 关中断 */
+
+	now_time = g_iRunTime;	/* 这个变量在Systick中断中被改写，因此需要关中断进行保护 */
+
+	ENABLE_INT();  		/* 开中断 */
+	
+	if (now_time >= _LastTime)
+	{
+		time_diff = now_time - _LastTime;
+	}
+	else
+	{
+		time_diff = 0x7FFFFFFF - _LastTime + now_time;
+	}
+
+	return time_diff;
+}
 /* USER CODE END 1 */
