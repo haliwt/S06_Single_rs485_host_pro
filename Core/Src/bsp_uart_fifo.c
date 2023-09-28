@@ -23,6 +23,8 @@ static void UartIRQ(UART_T *_pUart);
 void RS485_SendBefor(void);
 void RS485_SendOver(void);
 void RS485_ReciveNew(uint8_t _byte);
+uint8_t ch;
+
 /*
 *********************************************************************************************************
 *	函 数 名: UartVarInit
@@ -516,30 +518,32 @@ static void UartIRQ(UART_T *_pUart)
 	if ((isrflags & USART_ISR_RXNE_RXFNE) != RESET)
 	{
 		/* 从串口接收数据寄存器读取数据存放到接收FIFO */
-		uint8_t ch;
-
-		ch = READ_REG(_pUart->uart->RDR);
-		_pUart->pRxBuf[_pUart->usRxWrite] = ch;
-		if (++_pUart->usRxWrite >= _pUart->usRxBufSize)
-		{
-			_pUart->usRxWrite = 0;
-		}
-		if (_pUart->usRxCount < _pUart->usRxBufSize)
-		{
-			_pUart->usRxCount++;
-		}
-
+		
+//		ch = READ_REG(_pUart->uart->RDR);
+//		_pUart->pRxBuf[_pUart->usRxWrite] = ch;
+//		if (++_pUart->usRxWrite >= _pUart->usRxBufSize)
+//		{
+//			_pUart->usRxWrite = 0;
+//		}
+//		if (_pUart->usRxCount < _pUart->usRxBufSize)
+//		{
+//			_pUart->usRxCount++;
+//		}
+        g_tModH.rs485_RxInputBuf[0]=USART2->RDR;
+		g_tModH.RxBuf[g_tModH.RxCount] = g_tModH.rs485_RxInputBuf[0];
+		g_tModH.RxCount++;
 		/* 回调函数,通知应用程序收到新数据,一般是发送1个消息或者设置一个标记 */
 		//if (_pUart->usRxWrite == _pUart->usRxRead)
 		//if (_pUart->usRxCount == 1)
-		{
-			if (_pUart->ReciveNew)
-			{
-				_pUart->ReciveNew(ch); /* 比如，交给MODBUS解码程序处理字节流 */
-			}
-		}
+//		{
+//			if (_pUart->ReciveNew)
+//			{
+//				_pUart->ReciveNew(ch); /* 比如，交给MODBUS解码程序处理字节流 */
+//			}
+//		}
+		
 	}
-
+    UART_Start_Receive_IT(&huart2,g_tModH.rs485_RxInputBuf,0x07);
 	/* 处理发送缓冲区空中断 */
 	if ( ((isrflags & USART_ISR_TXE_TXFNF) != RESET) && (cr1its & USART_CR1_TXEIE_TXFNFIE) != RESET)
 	{
@@ -603,25 +607,24 @@ static void UartIRQ(UART_T *_pUart)
 	}
 	
 	/* 清除中断标志 */
-	SET_BIT(_pUart->uart->ICR, UART_CLEAR_PEF);
-	SET_BIT(_pUart->uart->ICR, UART_CLEAR_FEF);
-	SET_BIT(_pUart->uart->ICR, UART_CLEAR_NEF);
-	SET_BIT(_pUart->uart->ICR, UART_CLEAR_OREF);
-	SET_BIT(_pUart->uart->ICR, UART_CLEAR_IDLEF);
-	SET_BIT(_pUart->uart->ICR, UART_CLEAR_TCF);
-	SET_BIT(_pUart->uart->ICR, UART_CLEAR_LBDF);
+	SET_BIT(_pUart->uart->ICR, UART_CLEAR_PEF);    /*@arg UART_CLEAR_PEF: Parity Error Clear Flag*/
+	SET_BIT(_pUart->uart->ICR, UART_CLEAR_FEF);	   /* @arg UART_CLEAR_FEF: Framing Error Clear Flag*/
+	SET_BIT(_pUart->uart->ICR, UART_CLEAR_NEF);	   /* @arg UART_CLEAR_NEF: Noise detected Clear Flag */
+	SET_BIT(_pUart->uart->ICR, UART_CLEAR_OREF);   /* @arg UART_CLEAR_OREF: OverRun Error Clear Flag */
+	SET_BIT(_pUart->uart->ICR, UART_CLEAR_IDLEF);//  * @arg UART_CLEAR_IDLEF: IDLE line detected Clear Flag
+	SET_BIT(_pUart->uart->ICR, UART_CLEAR_TCF);		//  * @arg UART_CLEAR_TCF: Transmission Complete Clear Flag
+	SET_BIT(_pUart->uart->ICR, UART_CLEAR_LBDF);	//  * @arg UART_CLEAR_LBDF: LIN Break Detection Clear Flag
 	SET_BIT(_pUart->uart->ICR, UART_CLEAR_CTSF);
 	SET_BIT(_pUart->uart->ICR, UART_CLEAR_CMF);
 	SET_BIT(_pUart->uart->ICR, UART_CLEAR_WUF);
 	SET_BIT(_pUart->uart->ICR, UART_CLEAR_TXFECF);
 	
-//	  *            @arg UART_CLEAR_PEF: Parity Error Clear Flag
-//  *            @arg UART_CLEAR_FEF: Framing Error Clear Flag
-//  *            @arg UART_CLEAR_NEF: Noise detected Clear Flag
-//  *            @arg UART_CLEAR_OREF: OverRun Error Clear Flag
-//  *            @arg UART_CLEAR_IDLEF: IDLE line detected Clear Flag
-//  *            @arg UART_CLEAR_TCF: Transmission Complete Clear Flag
-//  *            @arg UART_CLEAR_LBDF: LIN Break Detection Clear Flag
+
+
+
+
+
+
 //  *            @arg UART_CLEAR_CTSF: CTS Interrupt Clear Flag
 //  *            @arg UART_CLEAR_RTOF: Receiver Time Out Clear Flag
 //  *            @arg UART_CLEAR_CMF: Character Match Clear Flag

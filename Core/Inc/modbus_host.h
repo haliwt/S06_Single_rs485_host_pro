@@ -51,7 +51,7 @@
 #define RSP_ERR_VALUE		0x03	/* 数据值域错误 */
 #define RSP_ERR_WRITE		0x04	/* 写入失败 */
 
-#define H_RX_BUF_SIZE		32//64
+#define H_RX_BUF_SIZE		20//64
 #define H_TX_BUF_SIZE      	32//128
 
 #if UART2_FIFO_EN == 1
@@ -79,6 +79,7 @@ typedef struct
 	uint8_t RxCount;
 	uint8_t RxStatus;
 	uint8_t RxNewFlag;
+	uint8_t rs485_RxInputBuf[1];
 
 	uint8_t RspCode;
 

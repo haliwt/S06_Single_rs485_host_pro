@@ -289,7 +289,7 @@ void MODH_Poll(void)
 			3B70  :  二个字节 CRC 码	从05到 57的校验
 	*/
 	g_modh_timeout = 0;
-
+    HAL_UART_Receive_DMA(&huart2,g_tModH.RxBuf, 0x07);
 	/* 接收到的数据小于4个字节就认为错误，地址（8bit）+指令（8bit）+操作寄存器（16bit） */
 	/* 发送地址+本地地址+功能码+数据长度+数据+CRC16(2BYTE)*/
 	if (g_tModH.RxCount < 5)
@@ -798,7 +798,7 @@ void RS485_Host_Communication_Handler(void)
      
     if(rs485_run_flag ==1){
 
-	   bsp_Idle();
+	  // bsp_Idle();
    
 	   if(run_t.gDry ==1 && (dry_flag !=run_t.rs485_send_dry)){
 

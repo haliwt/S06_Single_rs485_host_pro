@@ -111,6 +111,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim14);//HAL_TIM_Base_Start(&htim3);
   UART_Start_Receive_IT(&huart1,inputBuf,1);
+  UART_Start_Receive_IT(&huart2, g_tModH.rs485_RxInputBuf,0x07);
 
   #if DEBUG
    printf("Initialize is over\n");
@@ -140,7 +141,7 @@ int main(void)
       RunCommand_MainBoard_Fun();
 	  
     }
-	
+	//bsp_Idle();
 	RS485_Host_Communication_Handler();
     USART1_Cmd_Error_Handler(&huart1);
 	
