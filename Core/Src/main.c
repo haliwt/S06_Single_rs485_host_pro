@@ -101,7 +101,7 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM3_Init(23,9,10); //100KHz
   MX_TIM14_Init();
-  MX_IWDG_Init();
+//  MX_IWDG_Init();
  
   MX_ADC1_Init();
   MX_USART1_UART_Init();
@@ -130,15 +130,18 @@ int main(void)
     
         power_on_the_first++;
         Buzzer_KeySound();
+	    run_t.gTimer_rs485_times =0;
     
     }
 	Display_Decode_Function();
-	//MODH_Poll();
+	
     if(run_t.decodeFlag ==0){
+	  
       RunCommand_MainBoard_Fun();
 	  
     }
-	//RS485_Host_Communication_Handler();
+	
+	RS485_Host_Communication_Handler();
     USART1_Cmd_Error_Handler(&huart1);
 	
   }

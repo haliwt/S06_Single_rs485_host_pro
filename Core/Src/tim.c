@@ -23,7 +23,13 @@
 #include "bsp.h"
 
 /* USER CODE BEGIN 0 */
+static volatile uint32_t s_uiDelayCount = 0;
+static volatile uint8_t s_ucTimeOutFlag = 0;
+
+static SOFT_TMR s_tTmr[TMR_COUNT] = {0};
 __IO int32_t g_iRunTime = 0;
+
+static void bsp_SoftTimerDec(SOFT_TMR *_tmr);
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim1;
@@ -347,6 +353,53 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 /* USER CODE BEGIN 1 */
 /*
 *********************************************************************************************************
+*	º¯ Êý Ãû: SysTick_ISR
+*	¹¦ÄÜËµÃ÷: SysTickÖÐ¶Ï·þÎñ³ÌÐò£¬Ã¿¸ô1ms½øÈë1´Î
+*	ÐÎ    ²Î:  ÎÞ
+*	·µ »Ø Öµ: ÎÞ
+*********************************************************************************************************
+*/
+extern void bsp_RunPer1ms(void);
+extern void bsp_RunPer10ms(void);
+void SysTick_ISR(void)
+{
+	static uint8_t s_count = 0;
+	uint8_t i;
+	
+	/* Ã¿¸ô1ms½øÀ´1´Î £¨½öÓÃÓÚ bsp_DelayMS£© */
+	if (s_uiDelayCount > 0)
+	{
+		if (--s_uiDelayCount == 0)
+		{
+			s_ucTimeOutFlag = 1;
+		}
+	}
+
+	/* Ã¿¸ô1ms£¬¶ÔÈí¼þ¶¨Ê±Æ÷µÄ¼ÆÊýÆ÷½øÐÐ¼õÒ»²Ù×÷ */
+	for (i = 0; i < TMR_COUNT; i++)
+	{
+		bsp_SoftTimerDec(&s_tTmr[i]);
+	}
+
+	/* È«¾ÖÔËÐÐÊ±¼äÃ¿1msÔö1 */
+	g_iRunTime++;
+	if (g_iRunTime == 0x7FFFFFFF)	/* Õâ¸ö±äÁ¿ÊÇ int32_t ÀàÐÍ£¬×î´óÊýÎª 0x7FFFFFFF */
+	{
+		g_iRunTime = 0;
+	}
+
+	bsp_RunPer1ms();		/* Ã¿¸ô1msµ÷ÓÃÒ»´Î´Ëº¯Êý£¬´Ëº¯ÊýÔÚ bsp.c */
+
+	if (++s_count >= 10)
+	{
+		s_count = 0;
+
+		bsp_RunPer10ms();	/* Ã¿¸ô10msµ÷ÓÃÒ»´Î´Ëº¯Êý£¬´Ëº¯ÊýÔÚ bsp.c */
+	}
+}
+
+/*
+*********************************************************************************************************
 *	函 数 名: bsp_CheckRunTime
 *	功能说明: 计算当前运行时间和给定时刻之间的差值。处理了计数器循环。
 *	形    参:  _LastTime 上个时刻
@@ -374,6 +427,31 @@ int32_t bsp_CheckRunTime(int32_t _LastTime)
 	}
 
 	return time_diff;
+}
+/*
+*********************************************************************************************************
+*	º¯ Êý Ãû: bsp_SoftTimerDec
+*	¹¦ÄÜËµÃ÷: Ã¿¸ô1ms¶ÔËùÓÐ¶¨Ê±Æ÷±äÁ¿¼õ1¡£±ØÐë±»SysTick_ISRÖÜÆÚÐÔµ÷ÓÃ¡£
+*	ÐÎ    ²Î:  _tmr : ¶¨Ê±Æ÷±äÁ¿Ö¸Õë
+*	·µ »Ø Öµ: ÎÞ
+*********************************************************************************************************
+*/
+static void bsp_SoftTimerDec(SOFT_TMR *_tmr)
+{
+	if (_tmr->Count > 0)
+	{
+		/* Èç¹û¶¨Ê±Æ÷±äÁ¿¼õµ½1ÔòÉèÖÃ¶¨Ê±Æ÷µ½´ï±êÖ¾ */
+		if (--_tmr->Count == 0)
+		{
+			_tmr->Flag = 1;
+
+			/* Èç¹ûÊÇ×Ô¶¯Ä£Ê½£¬Ôò×Ô¶¯ÖØ×°¼ÆÊýÆ÷ */
+			if(_tmr->Mode == TMR_AUTO_MODE)
+			{
+				_tmr->Count = _tmr->PreLoad;
+			}
+		}
+	}
 }
 /*
 *********************************************************************************************************

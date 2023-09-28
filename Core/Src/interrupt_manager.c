@@ -87,6 +87,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	    run_t.gTimer_ptc_adc_times ++; 
         run_t.gTimer_fan_adc_times++ ;
+		run_t.gTimer_rs485_times++;
 	 
 		
 	 

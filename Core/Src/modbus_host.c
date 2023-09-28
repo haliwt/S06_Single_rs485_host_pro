@@ -50,7 +50,7 @@ const MODBUSBPS_T ModbusBaudRate[] =
 MODH_T g_tModH = {0};
 uint8_t g_modh_timeout = 0;
 VAR_T g_tVar;
-
+int32_t time1,time2;
 /*
 *********************************************************************************************************
 *	                                   函数声明
@@ -160,7 +160,7 @@ void MODH_Send00H_Power_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _data)
 *	返 回 值: 无
 *********************************************************************************************************
 */
-void MODH_Send00H_Ptc_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _data)
+void MODH_Send00H_Ptc_OnOff(uint8_t _addr,uint8_t _data_len,uint8_t _data)
 {
 	g_tModH.TxCount = 0;
 	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 发送地址 */
@@ -185,7 +185,7 @@ void MODH_Send00H_Ptc_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _data)
 *	返 回 值: 无
 *********************************************************************************************************
 */
-void MODH_Send00H_Plasma_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _data)
+void MODH_Send00H_Plasma_OnOff(uint8_t _addr,uint8_t _data_len,uint8_t _data)
 {
 	g_tModH.TxCount = 0;
 	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 发送地址 */
@@ -210,7 +210,7 @@ void MODH_Send00H_Plasma_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _data)
 *	返 回 值: 无
 *********************************************************************************************************
 */
-void MODH_Send00H_Ultrasonic_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _data)
+void MODH_Send00H_Ultrasonic_OnOff(uint8_t _addr,uint8_t _data_len,uint8_t _data)
 {
 	g_tModH.TxCount = 0;
 	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 发送地址 */
@@ -235,7 +235,7 @@ void MODH_Send00H_Ultrasonic_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _dat
 *	返 回 值: 无
 *********************************************************************************************************
 */
-void MODH_Send00H_Fan_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _data)
+void MODH_Send00H_Fan_OnOff(uint8_t _addr,uint8_t _data_len,uint8_t _data)
 {
 	g_tModH.TxCount = 0;
 	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 发送地址 */
@@ -417,23 +417,23 @@ static void MODH_Read_Address_01H(void)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_ReadParam_Power_01H(uint8_t add,uint8_t _reg, uint8_t _num)
+uint8_t MODH_ReadParam_Power_01H(uint8_t add,uint8_t _num,uint8_t _reg)
 {
-	int32_t time1;
+	//int32_t time1,time2;
 	uint8_t i;
 	
 	for (i = 0; i < NUM; i++)
 	{
 		//MODH_Send01H (SlaveAddr_1, _reg, _num);		  /* 发送命令 */
 		MODH_Send00H_Power_OnOff(add,_num,_reg);
-		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-		
-		while (1)				/* 等待应答,超时或接收到应答则break  */
+		//time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
+		run_t.gTimer_rs485_times=0;
+		//while (1)				
 		{
 			bsp_Idle();
-
-			if (bsp_CheckRunTime(time1) > TIMEOUT)		
-			{
+           // time2 = bsp_CheckRunTime(time1);
+			if(run_t.gTimer_rs485_times> 2) ///* 等待应答,超时或接收到应答则break  */
+            {
 				break;		/* 通信超时了 */
 			}
 			
@@ -467,7 +467,7 @@ uint8_t MODH_ReadParam_Power_01H(uint8_t add,uint8_t _reg, uint8_t _num)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_ReadParam_PTC_02H(uint8_t add,uint8_t _reg, uint8_t _num)
+uint8_t MODH_ReadParam_PTC_02H(uint8_t add,uint8_t _num,uint8_t _reg)
 {
 	int32_t time1;
 	uint8_t i;
@@ -476,13 +476,13 @@ uint8_t MODH_ReadParam_PTC_02H(uint8_t add,uint8_t _reg, uint8_t _num)
 	{
 		//MODH_Send02H (SlaveAddr_1, _reg, _num);
 		MODH_Send00H_Ptc_OnOff(add,_num,_reg);
-		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-		
-		while (1)
+	    //time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
+		//while (1)
 		{
 			bsp_Idle();
 
-			if (bsp_CheckRunTime(time1) > TIMEOUT)		
+			//if(bsp_CheckRunTime(time1) > TIMEOUT)//if(run_t.gTimer_rs485_times> TIMEOUT)		//if (bsp_CheckRunTime(time1) > TIMEOUT)		
+			if(run_t.gTimer_rs485_times> TIMEOUT)
 			{
 				break;		/* 通信超时了 */
 			}
@@ -508,6 +508,7 @@ uint8_t MODH_ReadParam_PTC_02H(uint8_t add,uint8_t _reg, uint8_t _num)
 		return 1;	/* 02H 读成功 */
 	}
 }
+
 /*
 *********************************************************************************************************
 *	函 数 名: MODH_ReadParam_03H
@@ -516,7 +517,7 @@ uint8_t MODH_ReadParam_PTC_02H(uint8_t add,uint8_t _reg, uint8_t _num)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_ReadParam_Plasma_03H(uint8_t add,uint8_t _reg, uint8_t _num)
+uint8_t MODH_ReadParam_Plasma_03H(uint8_t add,uint8_t _num,uint8_t _reg)
 {
 	int32_t time1;
 	uint8_t i;
@@ -525,13 +526,14 @@ uint8_t MODH_ReadParam_Plasma_03H(uint8_t add,uint8_t _reg, uint8_t _num)
 	{
 		//MODH_Send03H (SlaveAddr_1, _reg, _num);
 		MODH_Send00H_Plasma_OnOff(add,_num,_reg);
-		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-		
-		while (1)
+		//time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
+			run_t.gTimer_rs485_times=0;
+		//while (1)
 		{
 			bsp_Idle();
 
-			if (bsp_CheckRunTime(time1) > TIMEOUT)		
+			//if (bsp_CheckRunTime(time1) > TIMEOUT)//
+			if(run_t.gTimer_rs485_times> TIMEOUT)		
 			{
 				break;		/* 通信超时了 */
 			}
@@ -567,7 +569,7 @@ uint8_t MODH_ReadParam_Plasma_03H(uint8_t add,uint8_t _reg, uint8_t _num)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_ReadParam_Ultrasonic_04H(uint8_t add,uint8_t _reg, uint8_t _num)
+uint8_t MODH_ReadParam_Ultrasonic_04H(uint8_t add,uint8_t _num,uint8_t _reg)
 {
 	int32_t time1;
 	uint8_t i;
@@ -576,13 +578,14 @@ uint8_t MODH_ReadParam_Ultrasonic_04H(uint8_t add,uint8_t _reg, uint8_t _num)
 	{
 		//MODH_Send04H (SlaveAddr_1, _reg, _num);
 		MODH_Send00H_Ultrasonic_OnOff(add,_num,_reg);
-		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-		
-		while (1)
+		//time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
+			run_t.gTimer_rs485_times=0;
+		//while (1)
 		{
 			bsp_Idle();
 
-			if (bsp_CheckRunTime(time1) > TIMEOUT)		
+			//if(bsp_CheckRunTime(time1) > TIMEOUT)//
+			if(run_t.gTimer_rs485_times> TIMEOUT)		//if (bsp_CheckRunTime(time1) > TIMEOUT)		
 			{
 				break;		/* 通信超时了 */
 			}
@@ -608,6 +611,7 @@ uint8_t MODH_ReadParam_Ultrasonic_04H(uint8_t add,uint8_t _reg, uint8_t _num)
 		return 1;	/* 04H 读成功 */
 	}
 }
+
 /*
 *********************************************************************************************************
 *	函 数 名: MODH_WriteParam_05H
@@ -772,18 +776,20 @@ void RS485_Host_Communication_Handler(void)
 
 	 case POWER_ON:
 	 	 
-	    MODH_ReadParam_Power_01H(0x00,0x01,5);
-	    MODH_Poll();
+	    MODH_ReadParam_Power_01H(0x00,0x01,0x01);
+	    
 	    rs485_run_flag =1;
 
+	    run_t.rs485_Command_tag =0xff;
 
 	 break;
-     case POWER_OFF:
-
-	 	MODH_ReadParam_Power_01H(0x00,0x00,5);
-		MODH_Poll();
+     case POWER_OFF: //0
+        
+	 	MODH_ReadParam_Power_01H(0x00,0x01,0);
+    	bsp_Idle();
 		rs485_run_flag =0;
-	 
+	   
+	   run_t.rs485_Command_tag =0xff; 
 
 	 break;
 
@@ -792,36 +798,36 @@ void RS485_Host_Communication_Handler(void)
      
     if(rs485_run_flag ==1){
 
-	   
+	   bsp_Idle();
    
-	   if(run_t.gDry ==1 && (dry_flag !=run_t.rs485_send_times)){
+	   if(run_t.gDry ==1 && (dry_flag !=run_t.rs485_send_dry)){
 
-	       dry_flag = run_t.rs485_send_times;
+	       dry_flag = run_t.rs485_send_dry;
 
-		   MODH_ReadParam_PTC_02H(0x00,0x01,5);
+		   MODH_ReadParam_PTC_02H(0x00,0x01,0x01);
 		   
 
 		}
-		else if(run_t.gDry ==0 && (dry_off_flag !=run_t.rs485_send_times)){
-			dry_off_flag =run_t.rs485_send_times;
-		   MODH_ReadParam_PTC_02H(0x00,0x00,5);
+		else if(run_t.gDry ==0 && (dry_off_flag !=run_t.rs485_send_dry)){
+			dry_off_flag =run_t.rs485_send_dry;
+		   MODH_ReadParam_PTC_02H(0x00,0x01,0x0);
 		
 
 		}
 
 
-		if(run_t.gPlasma ==1 && (plasma_flag !=run_t.rs485_send_times)){
-			  plasma_flag = run_t.rs485_send_times;
+		if(run_t.gPlasma ==1 && (plasma_flag !=run_t.rs485_send_plasma)){
+			  plasma_flag = run_t.rs485_send_plasma;
           
-		     MODH_ReadParam_Plasma_03H(0x00,0x01,5);
+		     MODH_ReadParam_Plasma_03H(0x00,0x01,1);
 
 
 		}
-		else if(run_t.gPlasma ==0 && (plasma_off_flag !=run_t.rs485_send_times)){
+		else if(run_t.gPlasma ==0 && (plasma_off_flag !=run_t.rs485_send_plasma)){
 			
-		   plasma_off_flag = run_t.rs485_send_times;
+		   plasma_off_flag = run_t.rs485_send_plasma;
 
-		   MODH_ReadParam_Plasma_03H(0x00,0x00,5);
+		   MODH_ReadParam_Plasma_03H(0x00,0x01,0x00);
 
 
 		}

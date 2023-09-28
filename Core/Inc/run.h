@@ -165,6 +165,10 @@ typedef struct _RUN_T{
     uint8_t gTimer_usart_error;
     uint8_t iwdg_feed_success_flag;
 
+	//rs485
+	 uint8_t rs485_send_plasma;
+	 uint8_t  rs485_send_dry;
+
 	
 	
 	  
@@ -178,6 +182,8 @@ typedef struct _RUN_T{
 	  uint8_t first_power_on_flag;
 	  uint8_t app_appointment_time_power_on;
 	  uint8_t theFirst_input_power_flag;
+
+	  uint8_t gTimer_rs485_times;
 	 
 	  
 	  

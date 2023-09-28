@@ -51,8 +51,8 @@
 #define RSP_ERR_VALUE		0x03	/* 数据值域错误 */
 #define RSP_ERR_WRITE		0x04	/* 写入失败 */
 
-#define H_RX_BUF_SIZE		64
-#define H_TX_BUF_SIZE      	128
+#define H_RX_BUF_SIZE		32//64
+#define H_TX_BUF_SIZE      	32//128
 
 #if UART2_FIFO_EN == 1
 	#define UART2_BAUD			9600
@@ -129,10 +129,10 @@ typedef struct
 
 
 void MODH_Poll(void);
-uint8_t MODH_ReadParam_Power_01H(uint8_t add,uint8_t _reg, uint8_t _num);
-uint8_t MODH_ReadParam_PTC_02H(uint8_t add,uint8_t _reg, uint8_t _num);
-uint8_t MODH_ReadParam_Plasma_03H(uint8_t add,uint8_t _reg, uint8_t _num);
-uint8_t MODH_ReadParam_Ultrasonic_04H(uint8_t add,uint8_t _reg, uint8_t _num);
+uint8_t MODH_ReadParam_Power_01H(uint8_t addr,uint8_t _len,uint8_t _reg);
+uint8_t MODH_ReadParam_PTC_02H(uint8_t addr,uint8_t _len,uint8_t _reg);
+uint8_t MODH_ReadParam_Plasma_03H(uint8_t addr,uint8_t _len,uint8_t _reg);
+uint8_t MODH_ReadParam_Ultrasonic_04H(uint8_t addr,uint8_t _len,uint8_t _reg);
 uint8_t MODH_WriteParam_05H(uint16_t _reg, uint16_t _value);
 uint8_t MODH_WriteParam_06H(uint16_t _reg, uint16_t _value);
 uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t *_buf);

@@ -148,7 +148,7 @@ static void Single_Power_ReceiveCmd(uint8_t cmd)
 		//Answering_Signal_USART1_Handler(COMMAND_ID,ANSWER_POWER_OFF);
 	   run_t.RunCommand_Label= POWER_OFF;
        run_t.rs485_Command_tag =  POWER_OFF;
- 
+        run_t.gTimer_rs485_times=0;
 
     cmd = 0xff;
     break;
@@ -165,6 +165,7 @@ static void Single_Power_ReceiveCmd(uint8_t cmd)
         //Answering_Signal_USART1_Handler(COMMAND_ID,ANSWER_POWER_ON);
 		run_t.RunCommand_Label= POWER_ON;
 		run_t.rs485_Command_tag =  POWER_ON;
+		 run_t.gTimer_rs485_times=0;
 		
 
 		 
@@ -206,7 +207,8 @@ static void Single_Command_ReceiveCmd(uint8_t cmd)
 		  	    Buzzer_KeySound();
 		  }
 		  else no_buzzer_sound_dry_off=0;
-		  run_t.rs485_send_times++;
+		  run_t.rs485_send_dry++;
+		
 		
        break;
 
@@ -222,7 +224,7 @@ static void Single_Command_ReceiveCmd(uint8_t cmd)
             }
 			else no_buzzer_sound_dry_off=0;
 		
-			 run_t.rs485_send_times++;
+			 run_t.rs485_send_dry++;
 		
 			   
        break;
@@ -230,13 +232,14 @@ static void Single_Command_ReceiveCmd(uint8_t cmd)
        case PLASMA_ON:
        		run_t.gPlasma=1;
 		    Buzzer_KeySound();
-	        run_t.rs485_send_times++;
+	         run_t.rs485_send_plasma++;
 	    
        break;
 
        case PLASM_ON_NO_BUZZER:
      
            run_t.gPlasma=1;
+		    run_t.rs485_send_plasma++;
            
 
        break;
@@ -245,6 +248,8 @@ static void Single_Command_ReceiveCmd(uint8_t cmd)
           
            run_t.gPlasma=0;
            run_t.rs485_send_times++;
+		    run_t.gTimer_rs485_times=0;
+			 run_t.rs485_send_plasma++;
        break;
 
        
@@ -253,7 +258,7 @@ static void Single_Command_ReceiveCmd(uint8_t cmd)
            run_t.gPlasma=0;
 		   Buzzer_KeySound();
 	
-	       run_t.rs485_send_times++;
+	       run_t.rs485_send_plasma++;
        break;
 
        case  FAN_LEVEL_MIN: //this is fan_speed_min, run_t.gFan_level = fan_speed_min;
@@ -410,7 +415,7 @@ void RunCommand_MainBoard_Fun(void)
 		}
     break;
 
-	case  FAN_CONTINUCE_RUN_ONE_MINUTE:
+	case  FAN_CONTINUCE_RUN_ONE_MINUTE://0x07
 
 	   if(power_off_flag==0){
 		 	power_off_flag++;

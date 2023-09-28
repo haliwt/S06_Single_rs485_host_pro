@@ -300,7 +300,7 @@ void RS485_SendOver(void)
 */
 void RS485_SendBuf(uint8_t *_ucaBuf, uint16_t _usLen)
 {
-	comSendBuf(COM3, _ucaBuf, _usLen);
+	comSendBuf(COM2, _ucaBuf, _usLen);
 }
 
 /*
