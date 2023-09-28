@@ -39,7 +39,7 @@
 
 #if UART2_FIFO_EN == 1
 	#define UART2_BAUD			115200
-	#define UART2_TX_BUF_SIZE	10
+	#define UART2_TX_BUF_SIZE	1*1024
 	#define UART2_RX_BUF_SIZE	1*1024
 #endif
 

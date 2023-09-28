@@ -48,9 +48,10 @@ const MODBUSBPS_T ModbusBaudRate[] =
 };
 
 MODH_T g_tModH = {0};
-uint8_t g_modh_timeout = 0;
+
 VAR_T g_tVar;
-int32_t time1,time2;
+uint8_t crc16_check_flag;
+
 /*
 *********************************************************************************************************
 *	                                   函数声明
@@ -113,7 +114,7 @@ static void MODH_SendAckWithCRC(void)
 */
 static void MODH_AnalyzeApp(void)
 {	
-	switch (g_tModH.RxBuf[0])			/* 第2个字节 功能码 */
+	switch (g_tModH.RxBuf[1])			/* 第2个字节 功能码 */
 	{
 		case 0x01:	/* 读取线圈状态 */
 	        MODH_Read_Address_01H();
@@ -259,7 +260,7 @@ void MODH_Send00H_Fan_OnOff(uint8_t _addr,uint8_t _data_len,uint8_t _data)
 */
 static void MODH_RxTimeOut(void)
 {
-	g_modh_timeout = 1;
+	//g_modh_timeout = 1;
 }
 
 /*
@@ -272,7 +273,8 @@ static void MODH_RxTimeOut(void)
 */
 void MODH_Poll(void)
 {	
-	uint16_t crc1;
+	uint16_t crc1 ;
+	
 	
 //	if (g_modh_timeout == 0)	/* 超过3.5个字符时间后执行MODH_RxTimeOut()函数。全局变量 g_rtu_timeout = 1 */
 //	{
@@ -288,33 +290,44 @@ void MODH_Poll(void)
 			04 57 :  数据,,,转换成 10 进制是 1111.高位在前,
 			3B70  :  二个字节 CRC 码	从05到 57的校验
 	*/
-	g_modh_timeout = 0;
-    HAL_UART_Receive_DMA(&huart2,g_tModH.RxBuf, 0x07);
+//	g_modh_timeout = 0;
+    //HAL_UART_Receive_DMA(&huart2,g_tModH.RxBuf, 0x07);
 	/* 接收到的数据小于4个字节就认为错误，地址（8bit）+指令（8bit）+操作寄存器（16bit） */
 	/* 发送地址+本地地址+功能码+数据长度+数据+CRC16(2BYTE)*/
-	if (g_tModH.RxCount < 5)
-	{
-		goto err_ret;
-	}
+//	if (g_tModH.RxCount < 5)
+//	{
+//		goto err_ret;
+//	}
+    if(g_tModH.Rx_rs485_data_flag == rx_rs485_data_success){
+		/* 计算CRC校验和，这里是将接收到的数据包含CRC16值一起做CRC16，结果是0，表示正确接收 */
+		crc1 = CRC16_Modbus(g_tModH.RxBuf,g_tModH.RxCount);
+		if (crc1 != 0)
+		{
+			g_tModH.RxCount = 0;	/* 必须清零计数器，方便下次帧同步 */
+			g_tModH.Rx_rs485_data_flag=0;
+		}
+		else{
+        	crc16_check_flag = 1;
+			g_tModH.Rx_rs485_data_flag=0;
 
-	/* 计算CRC校验和，这里是将接收到的数据包含CRC16值一起做CRC16，结果是0，表示正确接收 */
-	crc1 = CRC16_Modbus(g_tModH.RxBuf, g_tModH.RxCount);
-	if (crc1 != 0)
-	{
-		goto err_ret;
-	}
+		}
+    }
+	if(crc16_check_flag==1){
+		g_tModH.RxCount = 0;
+		/* 分析应用层协议 */
+		MODH_AnalyzeApp();
+		crc16_check_flag=0;
 	
-	/* 分析应用层协议 */
-	MODH_AnalyzeApp();
+   	}
 
-err_ret:
-	g_tModH.RxCount = 0;	/* 必须清零计数器，方便下次帧同步 */
+	
 }
 
 /*
 *********************************************************************************************************
 *	函 数 名: MODH_Read_01H
 *	功能说明: 分析01H指令的应答数据，读取线圈状态，bit访问
+*             [发送的地址]+[本机地址]+[功能码]+[数据长度]+[数据]+[CRC16低]+[CRC16高]
 *	形    参: 无
 *	返 回 值: 无
 *********************************************************************************************************
@@ -323,10 +336,8 @@ static void MODH_Read_Address_01H(void)
 {
 	uint8_t bytes,fun_byte;
 	
-	
-	if (g_tModH.RxCount > 0)
-	{
-		bytes = g_tModH.RxBuf[2];	/* 数据长度 字节数 */				
+	  
+	   bytes = g_tModH.RxBuf[2];	/* 数据长度 字节数 */				
 		switch (bytes)
 		{
 			case mod_power: //0x0101
@@ -406,7 +417,7 @@ static void MODH_Read_Address_01H(void)
 			case mod_fan:
 
 			break;
-		}
+		
 	}
 }
 /*
@@ -469,7 +480,7 @@ uint8_t MODH_ReadParam_Power_01H(uint8_t add,uint8_t _num,uint8_t _reg)
 */
 uint8_t MODH_ReadParam_PTC_02H(uint8_t add,uint8_t _num,uint8_t _reg)
 {
-	int32_t time1;
+	
 	uint8_t i;
 	
 	for (i = 0; i < NUM; i++)

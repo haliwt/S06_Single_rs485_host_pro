@@ -141,7 +141,7 @@ int main(void)
       RunCommand_MainBoard_Fun();
 	  
     }
-	//bsp_Idle();
+	bsp_Idle();
 	RS485_Host_Communication_Handler();
     USART1_Cmd_Error_Handler(&huart1);
 	

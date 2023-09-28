@@ -23,7 +23,8 @@ static void UartIRQ(UART_T *_pUart);
 void RS485_SendBefor(void);
 void RS485_SendOver(void);
 void RS485_ReciveNew(uint8_t _byte);
-uint8_t ch;
+
+uint8_t success_flag ;
 
 /*
 *********************************************************************************************************
@@ -534,13 +535,16 @@ static void UartIRQ(UART_T *_pUart)
 		g_tModH.RxCount++;
 		/* 回调函数,通知应用程序收到新数据,一般是发送1个消息或者设置一个标记 */
 		//if (_pUart->usRxWrite == _pUart->usRxRead)
-		//if (_pUart->usRxCount == 1)
-//		{
+		if(g_tModH.RxCount == 7)
+		{
+           
+			g_tModH.Rx_rs485_data_flag = 1;
+			success_flag ++;
 //			if (_pUart->ReciveNew)
 //			{
 //				_pUart->ReciveNew(ch); /* 比如，交给MODBUS解码程序处理字节流 */
 //			}
-//		}
+		}
 		
 	}
     UART_Start_Receive_IT(&huart2,g_tModH.rs485_RxInputBuf,0x07);

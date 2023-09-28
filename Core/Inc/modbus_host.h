@@ -70,6 +70,13 @@ typedef enum {
    
 }_mod_fun;
 
+typedef enum{
+
+  rx_rs485_data_fail,
+  rx_rs485_data_success
+
+}Rx_rs485_data;
+
 typedef enum _mod_fun mod_fun_codes;
 
 
@@ -80,6 +87,7 @@ typedef struct
 	uint8_t RxStatus;
 	uint8_t RxNewFlag;
 	uint8_t rs485_RxInputBuf[1];
+	uint8_t Rx_rs485_data_flag;
 
 	uint8_t RspCode;
 
