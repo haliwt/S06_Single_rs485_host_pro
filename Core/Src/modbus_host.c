@@ -303,16 +303,17 @@ void MODH_Poll(void)
 		{
 			g_tModH.RxCount = 0;	/* 必须清零计数器，方便下次帧同步 */
 			g_tModH.Rx_rs485_data_flag=0;
+			Answerback_RS485_Signal(g_tModH.RxBuf[1],0xff,g_tModH.RxBuf[3],0x01);
 		}
 		else{
-        	g_tModH.crc16_check_flag = 1;
+        	crc16_check_flag = 1;
 			g_tModH.Rx_rs485_data_flag=0;
 		    g_tModH.RxCount =0;
 		    
 
 		}
     }
-	if(g_tModH.crc16_check_flag==1){
+	if(crc16_check_flag==1){
 		/* 分析应用层协议 */
 		MODH_AnalyzeApp();
 		crc16_check_flag=0;

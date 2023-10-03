@@ -71,7 +71,7 @@ typedef enum {
   mod_set_timer_power_off,
   mod_set_temperature_value,
   mod_fan_error,
-  mod_ptc_error
+  mod_ptc_error,
    
 }_mod_fun;
 
@@ -85,29 +85,6 @@ typedef enum{
 }Rx_rs485_data;
 
 
-typedef enum {
-   
-    WIFI_POWER_ON = 0x80,
-    WIFI_POWER_OFF=0X81,
-    WIFI_MODE_1=0X08,   //state ->normal works
-    WIFI_MODE_2=0X18,   //state->sleeping works
-    WIFI_KILL_ON=0x04,  //Anion(plasma)
-    WIFI_KILL_OFF=0x14,
-    WIFI_PTC_ON = 0x02, 
-    WIFI_PTC_OFF = 0x12,
-    WIFI_SONIC_ON = 0x01,       //ultrasonic
-    WIFI_SONIC_OFF = 0x11,
-    WIFI_TEMPERATURE = 0xA0,
-    WIFI_POWER_ON_NORMAL= 0xB0,
-
-	PTC_WARNING= 0xE1,
-	FAN_WARNING = 0xE2,
-
-	FAN_REMOVE_WARNING = 0xF2
-    
-
-
-}wifi_link_t;
 
 
 typedef enum _mod_fun mod_fun_codes;
@@ -133,7 +110,6 @@ typedef struct
 	uint8_t mod_fan;//Reg04H;
 
 	uint8_t RegNum;			/* 寄存器个数 */
-	uint8_t crc16_check_flag;
 
 	uint8_t fAck01H;		/* 应答命令标志 0 表示执行失败 1表示执行成功 */
 	uint8_t fAck02H;
