@@ -134,6 +134,8 @@ int main(void)
 	    run_t.gTimer_rs485_times =0;
     
     }
+	/* --- 喂狗 */
+
 	Display_Decode_Function();
 	
     if(run_t.decodeFlag ==0){

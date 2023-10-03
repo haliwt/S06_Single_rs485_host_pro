@@ -18,8 +18,8 @@ void MX_IWDG_Init(void)
 
   /* USER CODE END IWDG_Init 1 */
   hiwdg.Instance = IWDG;
-  hiwdg.Init.Prescaler = IWDG_PRESCALER_4;
-  hiwdg.Init.Window = 4095;  //12bit of counter  4096 -> 4.096ms
+  hiwdg.Init.Prescaler = IWDG_PRESCALER_4; 
+  hiwdg.Init.Window = 4095;  //12bit of counter  4096 -> 4.096s
   hiwdg.Init.Reload = 4095;
   if (HAL_IWDG_Init(&hiwdg) != HAL_OK)
   {

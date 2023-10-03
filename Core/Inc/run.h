@@ -171,6 +171,7 @@ typedef struct _RUN_T{
 	 uint8_t rs485_send_ultrasonic;
 	 uint8_t  broadcast_send_flag;
 	 uint8_t broadcast_response_signal;
+	 uint8_t gTimer_dogfood_times;
 
 	
 	
