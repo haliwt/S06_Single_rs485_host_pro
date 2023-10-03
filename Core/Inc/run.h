@@ -62,10 +62,10 @@ typedef enum{
      AI_MODE_ON = 0x30,   //EDIT 2023.09.13 new Add
      AI_MODE_OFF =0x31, 
 
-	 PTC_WARNING= 0xE1,
-	 FAN_WARNING = 0xE2,
+	 PTC_WARNING_ITEM= 0xE1,
+	 FAN_WARNING_ITEM = 0xE2,
 
-	 FAN_REMOVE_WARNING = 0xF2
+	 FAN_REMOVE_WARNING_ITEM = 0xF2
      
 
 }works_t;

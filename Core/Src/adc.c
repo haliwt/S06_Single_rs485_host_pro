@@ -259,7 +259,7 @@ void Judge_PTC_Temperature_Value(void)
 	    PTC_SetLow(); //turn off
         run_t.ptc_too_heat_value =1;
 		run_t.ptc_warning =1;
-        SendWifiCmd_To_Order(PTC_WARNING);
+        SendWifiCmd_To_Order(PTC_WARNING_ITEM);
 
          Buzzer_KeySound();
 
@@ -320,7 +320,7 @@ void Get_Fan_Adc_Fun(uint32_t channel,uint8_t times)
 			       HAL_Delay(100);
 				   Buzzer_KeySound();
 			       HAL_Delay(100);
-				   SendWifiCmd_To_Order(FAN_WARNING);
+				   SendWifiCmd_To_Order(FAN_WARNING_ITEM);
 				  
 
 			   	}

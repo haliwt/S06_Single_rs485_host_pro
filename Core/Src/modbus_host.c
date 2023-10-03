@@ -52,6 +52,11 @@ MODH_T g_tModH = {0};
 VAR_T g_tVar;
 uint8_t crc16_check_flag;
 
+uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data,fun_byte;
+uint8_t counter;
+
+
+
 /*
 *********************************************************************************************************
 *	                                   函数声明
@@ -114,17 +119,9 @@ static void MODH_SendAckWithCRC(void)
 */
 static void MODH_AnalyzeApp(void)
 {	
-	switch (g_tModH.RxBuf[1])			/* 第2个字节 功能码 */
-	{
-		case 0x01:	/* 读取线圈状态 */
-	        MODH_Read_Address_01H();
-			break;
-
-		
-		
-		default:
-			break;
-	}
+	
+    MODH_Read_Address_01H();
+	   
 }
 /*
 *********************************************************************************************************
@@ -275,12 +272,12 @@ void MODH_Poll(void)
 {	
 	uint16_t crc1 ;
 	
-	
-//	if (g_modh_timeout == 0)	/* 超过3.5个字符时间后执行MODH_RxTimeOut()函数。全局变量 g_rtu_timeout = 1 */
-//	{
-//		/* 没有超时，继续接收。不要清零 g_tModH.RxCount */
-//		return ;
-//	}
+#if 0	
+	if (g_modh_timeout == 0)	/* 超过3.5个字符时间后执行MODH_RxTimeOut()函数。全局变量 g_rtu_timeout = 1 */
+	{
+		/* 没有超时，继续接收。不要清零 g_tModH.RxCount */
+		return ;
+	}
 
 	/* 收到命令
 		05 06 00 88 04 57 3B70 (8 字节)
@@ -290,14 +287,15 @@ void MODH_Poll(void)
 			04 57 :  数据,,,转换成 10 进制是 1111.高位在前,
 			3B70  :  二个字节 CRC 码	从05到 57的校验
 	*/
-//	g_modh_timeout = 0;
-    //HAL_UART_Receive_DMA(&huart2,g_tModH.RxBuf, 0x07);
+	g_modh_timeout = 0;
+    HAL_UART_Receive_DMA(&huart2,g_tModH.RxBuf, 0x07);
 	/* 接收到的数据小于4个字节就认为错误，地址（8bit）+指令（8bit）+操作寄存器（16bit） */
 	/* 发送地址+本地地址+功能码+数据长度+数据+CRC16(2BYTE)*/
-//	if (g_tModH.RxCount < 5)
-//	{
-//		goto err_ret;
-//	}
+	if (g_tModH.RxCount < 5)
+	{
+		goto err_ret;
+	}
+#endif 
     if(g_tModH.Rx_rs485_data_flag == rx_rs485_data_success){
 		/* 计算CRC校验和，这里是将接收到的数据包含CRC16值一起做CRC16，结果是0，表示正确接收 */
 		crc1 = CRC16_Modbus(g_tModH.RxBuf,g_tModH.RxCount);
@@ -307,16 +305,19 @@ void MODH_Poll(void)
 			g_tModH.Rx_rs485_data_flag=0;
 		}
 		else{
-        	crc16_check_flag = 1;
+        	g_tModH.crc16_check_flag = 1;
 			g_tModH.Rx_rs485_data_flag=0;
+		    g_tModH.RxCount =0;
+		    
 
 		}
     }
-	if(crc16_check_flag==1){
-		g_tModH.RxCount = 0;
+	if(g_tModH.crc16_check_flag==1){
 		/* 分析应用层协议 */
 		MODH_AnalyzeApp();
+		counter++;
 		crc16_check_flag=0;
+	 
 	
    	}
 
@@ -334,23 +335,35 @@ void MODH_Poll(void)
 */
 static void MODH_Read_Address_01H(void)
 {
-	uint8_t bytes,fun_byte;
+	
 	
 	  
-	   bytes = g_tModH.RxBuf[2];	/* 数据长度 字节数 */				
-		switch (bytes)
+	   bytes_zero = g_tModH.RxBuf[0];	/* 主机  地址   0x01 */
+	   byte_load_addr = g_tModH.RxBuf[1]; /* 从机地址，0x*/
+	   byte_fun_code = g_tModH.RxBuf[2];
+	   byte_len = g_tModH.RxBuf[3];
+	   byte_data = g_tModH.RxBuf[4];
+
+	   Answerback_RS485_Signal(byte_load_addr,byte_fun_code,byte_len,byte_data);
+	   g_tModH.crc16_check_flag=0;
+	   
+	   if(bytes_zero == MasterAddr){
+		switch (byte_fun_code)
 		{
 			case mod_power: //0x0101
 				
-				fun_byte = g_tModH.RxBuf[4]; //read rs485 data 	
-				switch(fun_byte){
+				switch(byte_data){
 
                    case 0:
                        run_t.RunCommand_Label= POWER_OFF;
+				      
+				       SendWifiCmd_To_Order(WIFI_POWER_OFF);
+				      
 				   break;
 
 				   case 1:
 				      run_t.RunCommand_Label= POWER_ON;
+					  SendWifiCmd_To_Order(WIFI_POWER_ON);
 
 				   break;
 
@@ -361,8 +374,10 @@ static void MODH_Read_Address_01H(void)
 			break;
 
 			case mod_ptc:
-			   fun_byte = g_tModH.RxBuf[4]; //read rs485 data
-			   switch(fun_byte){
+
+			   if(run_t.gPower_On == POWER_ON){
+			  
+			   switch(byte_data){
 
                    case 0:
                       run_t.gDry = 0;
@@ -375,11 +390,14 @@ static void MODH_Read_Address_01H(void)
 
 				}	
                 g_tModH.fAck02H = 1;
+			   }
 			break;
 
 			case mod_plasma:
-			    fun_byte = g_tModH.RxBuf[4]; //read rs485 data 	
-			     switch(fun_byte){
+
+				 if(run_t.gPower_On == POWER_ON){
+			   
+			     switch(byte_data){
 
                    case 0:
                      run_t.gPlasma=0; 
@@ -393,12 +411,15 @@ static void MODH_Read_Address_01H(void)
 
 				}	
                 g_tModH.fAck03H = 1;
+				}
 
 			break;
 
 			case mod_ulrasonic:
-				fun_byte = g_tModH.RxBuf[4]; //read rs485 data 	
-				 switch(fun_byte){
+
+			    if(run_t.gPower_On == POWER_ON){
+				
+				 switch(byte_data){
 
                    case 0:
                        run_t.ultrasonic = 0;
@@ -412,11 +433,14 @@ static void MODH_Read_Address_01H(void)
 				}	
                 g_tModH.fAck04H = 1;
 
+			   }
+
 			break;
 
 			case mod_fan:
 
 			break;
+	    }
 		
 	}
 }
@@ -428,7 +452,7 @@ static void MODH_Read_Address_01H(void)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_ReadParam_Power_01H(uint8_t add,uint8_t _num,uint8_t _reg)
+uint8_t MODH_WriteParam_Power_01H(uint8_t add,uint8_t _num,uint8_t _reg)
 {
 	//int32_t time1,time2;
 	uint8_t i;
@@ -478,7 +502,7 @@ uint8_t MODH_ReadParam_Power_01H(uint8_t add,uint8_t _num,uint8_t _reg)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_ReadParam_PTC_02H(uint8_t add,uint8_t _num,uint8_t _reg)
+uint8_t MODH_WriteParam_PTC_02H(uint8_t add,uint8_t _num,uint8_t _reg)
 {
 	
 	uint8_t i;
@@ -528,7 +552,7 @@ uint8_t MODH_ReadParam_PTC_02H(uint8_t add,uint8_t _num,uint8_t _reg)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_ReadParam_Plasma_03H(uint8_t add,uint8_t _num,uint8_t _reg)
+uint8_t MODH_WriteParam_Plasma_03H(uint8_t add,uint8_t _num,uint8_t _reg)
 {
 	int32_t time1;
 	uint8_t i;
@@ -580,7 +604,7 @@ uint8_t MODH_ReadParam_Plasma_03H(uint8_t add,uint8_t _num,uint8_t _reg)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_ReadParam_Ultrasonic_04H(uint8_t add,uint8_t _num,uint8_t _reg)
+uint8_t MODH_WriteParam_Ultrasonic_04H(uint8_t add,uint8_t _num,uint8_t _reg)
 {
 	int32_t time1;
 	uint8_t i;
@@ -623,153 +647,31 @@ uint8_t MODH_ReadParam_Ultrasonic_04H(uint8_t add,uint8_t _num,uint8_t _reg)
 	}
 }
 
-/*
-*********************************************************************************************************
-*	函 数 名: MODH_WriteParam_05H
-*	功能说明: 单个参数. 通过发送05H指令实现，发送之后，等待从机应答。
-*	形    参: 无
-*	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
-*********************************************************************************************************
-*/
-//uint8_t MODH_WriteParam_05H(uint16_t _reg, uint16_t _value)
-//{
-//	int32_t time1;
-//	uint8_t i;
+/********************************************************************************
+	**
+	*Function Name:
+	*Function :UART callback function  for UART interrupt for transmit data
+	*Input Ref: structure UART_HandleTypeDef pointer
+	*Return Ref:NO
+	*
+*******************************************************************************/
+void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t data)
+{
+	g_tModH.TxCount = 0;
+	g_tModH.TxBuf[g_tModH.TxCount++] = MasterAddr;		/* 从站地址 发送地址 */
+	g_tModH.TxBuf[g_tModH.TxCount++] = addr;  /* 本地地址*/
+	g_tModH.TxBuf[g_tModH.TxCount++] = fun_code;		/* 功能码 等离子开或者关闭 */	
+	g_tModH.TxBuf[g_tModH.TxCount++] = len;	/* 数据长度*/
+	g_tModH.TxBuf[g_tModH.TxCount++] = data;		/* 数据 */
+	
+	MODH_SendAckWithCRC();		/* 发送数据，自动加CRC */
+	g_tModH.fAck02H = 0;		/* 清接收标志 */
+	//g_tModH.RegNum = _num;		/* 寄存器个数 */
+	//g_tModH.Reg02H = _reg;		/* 保存02H指令中的寄存器地址，方便对应答数据进行分类 */	
 
-//	for (i = 0; i < NUM; i++)
-//	{
-//		//MODH_Send05H (SlaveAddr_1, _reg, _value);
-//		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-//		
-//		while (1)
-//		{
-//			bsp_Idle();
-//			
-//			/* 超时大于 TIMEOUT，则认为异常 */
-//			if (bsp_CheckRunTime(time1) > TIMEOUT)		
-//			{
-//				break;	/* 通信超时了 */
-//			}
-//			
-//			if (g_tModH.fAck05H > 0)
-//			{
-//				break;
-//			}
-//		}
-//		
-//		if (g_tModH.fAck05H > 0)
-//		{
-//			break;
-//		}
-//	}
-//	
-//	if (g_tModH.fAck05H == 0)
-//	{
-//		return 0;	/* 通信超时了 */
-//	}
-//	else
-//	{
-//		return 1;	/* 05H 写成功 */
-//	}
-//}
 
-/*
-*********************************************************************************************************
-*	函 数 名: MODH_WriteParam_06H
-*	功能说明: 单个参数. 通过发送06H指令实现，发送之后，等待从机应答。循环NUM次写命令
-*	形    参: 无
-*	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
-*********************************************************************************************************
-*/
-//uint8_t MODH_WriteParam_06H(uint16_t _reg, uint16_t _value)
-//{
-//	int32_t time1;
-//	uint8_t i;
-//	
-//	for (i = 0; i < NUM; i++)
-//	{	
-//		//MODH_Send06H (SlaveAddr_1, _reg, _value);
-//		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-//				
-//		while (1)
-//		{
-//			bsp_Idle();
-//		
-//			if (bsp_CheckRunTime(time1) > TIMEOUT)		
-//			{
-//				break;
-//			}
-//			
-//			if (g_tModH.fAck06H > 0)
-//			{
-//				break;
-//			}
-//		}
-//		
-//		if (g_tModH.fAck06H > 0)
-//		{
-//			break;
-//		}
-//	}
-//	
-//	if (g_tModH.fAck06H == 0)
-//	{
-//		return 0;	/* 通信超时了 */
-//	}
-//	else
-//	{
-//		return 1;	/* 写入06H参数成功 */
-//	}
-//}
 
-/*
-*********************************************************************************************************
-*	函 数 名: MODH_WriteParam_10H
-*	功能说明: 单个参数. 通过发送10H指令实现，发送之后，等待从机应答。循环NUM次写命令
-*	形    参: 无
-*	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
-*********************************************************************************************************
-*/
-//uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t *_buf)
-//{
-//	int32_t time1;
-//	uint8_t i;
-//	
-//	for (i = 0; i < NUM; i++)
-//	{	
-//		//MODH_Send10H(SlaveAddr_1, _reg, _num, _buf);
-//		time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-//				
-//		while (1)
-//		{
-//			bsp_Idle();
-//		
-//			if (bsp_CheckRunTime(time1) > TIMEOUT)		
-//			{
-//				break;
-//			}
-//			
-//			if (g_tModH.fAck10H > 0)
-//			{
-//				break;
-//			}
-//		}
-//		
-//		if (g_tModH.fAck10H > 0)
-//		{
-//			break;
-//		}
-//	}
-//	
-//	if (g_tModH.fAck10H == 0)
-//	{
-//		return 0;	/* 通信超时了 */
-//	}
-//	else
-//	{
-//		return 1;	/* 写入10H参数成功 */
-//	}
-//}
+}
 
 /*********************************************************************************************************
 *	函 数 名: MODH_WriteParam_10H
@@ -787,7 +689,7 @@ void RS485_Host_Communication_Handler(void)
 
 	 case POWER_ON:
 	 	 
-	    MODH_ReadParam_Power_01H(0x00,0x01,0x01);
+	    MODH_WriteParam_Power_01H(0x00,0x01,0x01); //all local extension machine power on  
 	    
 	    rs485_run_flag =1;
 
@@ -796,8 +698,8 @@ void RS485_Host_Communication_Handler(void)
 	 break;
      case POWER_OFF: //0
         
-	 	MODH_ReadParam_Power_01H(0x00,0x01,0);
-    	bsp_Idle();
+	 	MODH_WriteParam_Power_01H(0x00,0x01,0);
+    
 		rs485_run_flag =0;
 	   
 	   run_t.rs485_Command_tag =0xff; 
@@ -815,13 +717,13 @@ void RS485_Host_Communication_Handler(void)
 
 	       dry_flag = run_t.rs485_send_dry;
 
-		   MODH_ReadParam_PTC_02H(0x00,0x01,0x01);
+		   MODH_WriteParam_PTC_02H(0x00,0x01,0x01);
 		   
 
 		}
 		else if(run_t.gDry ==0 && (dry_off_flag !=run_t.rs485_send_dry)){
 			dry_off_flag =run_t.rs485_send_dry;
-		   MODH_ReadParam_PTC_02H(0x00,0x01,0x0);
+		   MODH_WriteParam_PTC_02H(0x00,0x01,0x0);
 		
 
 		}
@@ -830,7 +732,7 @@ void RS485_Host_Communication_Handler(void)
 		if(run_t.gPlasma ==1 && (plasma_flag !=run_t.rs485_send_plasma)){
 			  plasma_flag = run_t.rs485_send_plasma;
           
-		     MODH_ReadParam_Plasma_03H(0x00,0x01,1);
+		     MODH_WriteParam_Plasma_03H(0x00,0x01,1);
 
 
 		}
@@ -838,7 +740,7 @@ void RS485_Host_Communication_Handler(void)
 			
 		   plasma_off_flag = run_t.rs485_send_plasma;
 
-		   MODH_ReadParam_Plasma_03H(0x00,0x01,0x00);
+		   MODH_WriteParam_Plasma_03H(0x00,0x01,0x00);
 
 
 		}

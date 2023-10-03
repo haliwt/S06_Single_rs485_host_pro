@@ -547,7 +547,7 @@ static void Current_Works_State(void)
 		       HAL_Delay(100);
 			   Buzzer_KeySound();
 		       HAL_Delay(100);
-			   SendWifiCmd_To_Order(FAN_WARNING);
+			   SendWifiCmd_To_Order(FAN_WARNING_ITEM);
 			  
                	}
 		   	}
@@ -573,7 +573,7 @@ static void Current_Works_State(void)
 		       HAL_Delay(100);
 			   Buzzer_KeySound();
 		       HAL_Delay(100);
-			   SendWifiCmd_To_Order(PTC_WARNING);
+			   SendWifiCmd_To_Order(PTC_WARNING_ITEM);
 		     }
 
 		   }

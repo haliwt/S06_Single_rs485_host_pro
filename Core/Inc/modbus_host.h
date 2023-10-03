@@ -66,9 +66,16 @@ typedef enum {
   mod_ptc,
   mod_plasma,
   mod_ulrasonic,
-  mod_fan
+  mod_fan,
+  mod_set_timer_power_on,
+  mod_set_timer_power_off,
+  mod_set_temperature_value,
+  mod_fan_error,
+  mod_ptc_error
    
 }_mod_fun;
+
+
 
 typedef enum{
 
@@ -76,6 +83,32 @@ typedef enum{
   rx_rs485_data_success
 
 }Rx_rs485_data;
+
+
+typedef enum {
+   
+    WIFI_POWER_ON = 0x80,
+    WIFI_POWER_OFF=0X81,
+    WIFI_MODE_1=0X08,   //state ->normal works
+    WIFI_MODE_2=0X18,   //state->sleeping works
+    WIFI_KILL_ON=0x04,  //Anion(plasma)
+    WIFI_KILL_OFF=0x14,
+    WIFI_PTC_ON = 0x02, 
+    WIFI_PTC_OFF = 0x12,
+    WIFI_SONIC_ON = 0x01,       //ultrasonic
+    WIFI_SONIC_OFF = 0x11,
+    WIFI_TEMPERATURE = 0xA0,
+    WIFI_POWER_ON_NORMAL= 0xB0,
+
+	PTC_WARNING= 0xE1,
+	FAN_WARNING = 0xE2,
+
+	FAN_REMOVE_WARNING = 0xF2
+    
+
+
+}wifi_link_t;
+
 
 typedef enum _mod_fun mod_fun_codes;
 
@@ -100,6 +133,7 @@ typedef struct
 	uint8_t mod_fan;//Reg04H;
 
 	uint8_t RegNum;			/* 寄存器个数 */
+	uint8_t crc16_check_flag;
 
 	uint8_t fAck01H;		/* 应答命令标志 0 表示执行失败 1表示执行成功 */
 	uint8_t fAck02H;
@@ -138,14 +172,15 @@ typedef struct
 
 
 void MODH_Poll(void);
-uint8_t MODH_ReadParam_Power_01H(uint8_t addr,uint8_t _len,uint8_t _reg);
-uint8_t MODH_ReadParam_PTC_02H(uint8_t addr,uint8_t _len,uint8_t _reg);
-uint8_t MODH_ReadParam_Plasma_03H(uint8_t addr,uint8_t _len,uint8_t _reg);
-uint8_t MODH_ReadParam_Ultrasonic_04H(uint8_t addr,uint8_t _len,uint8_t _reg);
+uint8_t MODH_WriteParam_Power_01H(uint8_t addr,uint8_t _len,uint8_t _reg);
+uint8_t MODH_WriteParam_PTC_02H(uint8_t addr,uint8_t _len,uint8_t _reg);
+uint8_t MODH_WriteParam_Plasma_03H(uint8_t addr,uint8_t _len,uint8_t _reg);
+uint8_t MODH_WriteParam_Ultrasonic_04H(uint8_t addr,uint8_t _len,uint8_t _reg);
 uint8_t MODH_WriteParam_05H(uint16_t _reg, uint16_t _value);
 uint8_t MODH_WriteParam_06H(uint16_t _reg, uint16_t _value);
 uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t *_buf);
 void RS485_Host_Communication_Handler(void);
+void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t data);
 
 
 
