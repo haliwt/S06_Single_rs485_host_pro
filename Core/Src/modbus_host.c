@@ -52,8 +52,8 @@ MODH_T g_tModH = {0};
 VAR_T g_tVar;
 uint8_t crc16_check_flag;
 
-uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data,fun_byte;
-uint8_t counter;
+
+
 
 
 
@@ -315,7 +315,6 @@ void MODH_Poll(void)
 	if(g_tModH.crc16_check_flag==1){
 		/* 分析应用层协议 */
 		MODH_AnalyzeApp();
-		counter++;
 		crc16_check_flag=0;
 	 
 	
@@ -336,7 +335,7 @@ void MODH_Poll(void)
 static void MODH_Read_Address_01H(void)
 {
 	
-	
+	uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data,fun_byte;
 	  
 	   bytes_zero = g_tModH.RxBuf[0];	/* 主机  地址   0x01 */
 	   byte_load_addr = g_tModH.RxBuf[1]; /* 从机地址，0x*/
@@ -345,7 +344,7 @@ static void MODH_Read_Address_01H(void)
 	   byte_data = g_tModH.RxBuf[4];
 
 	   Answerback_RS485_Signal(byte_load_addr,byte_fun_code,byte_len,byte_data);
-	   g_tModH.crc16_check_flag=0;
+	   
 	   
 	   if(bytes_zero == MasterAddr){
 		switch (byte_fun_code)
