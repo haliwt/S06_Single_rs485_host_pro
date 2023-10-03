@@ -344,10 +344,18 @@ static void MODH_Read_Address_01H(void)
 	   byte_len = g_tModH.RxBuf[3];
 	   byte_data = g_tModH.RxBuf[4];
 
-	   Answerback_RS485_Signal(byte_load_addr,byte_fun_code,byte_len,byte_data);
+	   if(bytes_zero ==0 && run_t.broadcast_send_flag ==1){
+
+	     run_t.broadcast_response_signal = SUCCESS_BROADCAST;
+		 run_t.broadcast_send_flag =0;
+
+	   }
+       else if(bytes_zero == MasterAddr){
+
+	   	Answerback_RS485_Signal(byte_load_addr,byte_fun_code,byte_len,byte_data);
 	   
 	   
-	   if(bytes_zero == MasterAddr){
+	  
 		switch (byte_fun_code)
 		{
 			case mod_power: //0x0101
@@ -443,6 +451,17 @@ static void MODH_Read_Address_01H(void)
 	    }
 		
 	}
+
+	if(run_t.broadcast_send_flag == 1){
+
+	    if(run_t.gTimer_rs485_times> TIMEOUT)
+		{
+		  run_t.broadcast_send_flag = 0;	
+					
+		}
+
+
+	}
 }
 /*
 *********************************************************************************************************
@@ -461,37 +480,41 @@ uint8_t MODH_WriteParam_Power_01H(uint8_t add,uint8_t _num,uint8_t _reg)
 	{
 		//MODH_Send01H (SlaveAddr_1, _reg, _num);		  /* 发送命令 */
 		MODH_Send00H_Power_OnOff(add,_num,_reg);
-		//time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
 		run_t.gTimer_rs485_times=0;
-		//while (1)				
+		run_t.broadcast_send_flag = 1;	
+		#if 0
+		while (1)
 		{
 			bsp_Idle();
-           // time2 = bsp_CheckRunTime(time1);
-			if(run_t.gTimer_rs485_times> 2) ///* 等待应答,超时或接收到应答则break  */
-            {
+
+			//if(bsp_CheckRunTime(time1) > TIMEOUT)//if(run_t.gTimer_rs485_times> TIMEOUT)		//if (bsp_CheckRunTime(time1) > TIMEOUT)		
+			if(run_t.gTimer_rs485_times> TIMEOUT)
+			{
+                run_t.broadcast_send_flag = 0;	
 				break;		/* 通信超时了 */
 			}
 			
-			if (g_tModH.fAck01H > 0)
+			if (run_t.broadcast_response_signal == SUCCESS_BROADCAST )
 			{
-				break;		/* 接收到应答 */
+				run_t.broadcast_response_signal++;
+				break;
 			}
 		}
+		#endif 
 		
-		if (g_tModH.fAck01H > 0)
-		{
-			break;			/* 循环NUM次，如果接收到命令则break循环 */
-		}
 	}
+
+//	if (run_t.broadcast_response_signal == 0)
+//	{
+//		run_t.broadcast_send_flag=0;
+//		return 0;
+//	}
+//	else 
+//	{
+//        run_t.broadcast_send_flag=0;
+//		return 1;	/* 02H 读成功 */
+//	}
 	
-	if (g_tModH.fAck01H == 0)
-	{
-		return 0;
-	}
-	else 
-	{
-		return 1;	/* 01H 读成功 */
-	}
 }
 
 /*
@@ -514,7 +537,7 @@ uint8_t MODH_WriteParam_PTC_02H(uint8_t add,uint8_t _num,uint8_t _reg)
 	    //time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
 		//while (1)
 		{
-			bsp_Idle();
+		//	bsp_Idle();
 
 			//if(bsp_CheckRunTime(time1) > TIMEOUT)//if(run_t.gTimer_rs485_times> TIMEOUT)		//if (bsp_CheckRunTime(time1) > TIMEOUT)		
 			if(run_t.gTimer_rs485_times> TIMEOUT)
@@ -552,7 +575,7 @@ uint8_t MODH_WriteParam_PTC_02H(uint8_t add,uint8_t _num,uint8_t _reg)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_WriteParam_Plasma_03H(uint8_t add,uint8_t _num,uint8_t _reg)
+uint8_t MODH_WriteParam_Plasma_03H(uint8_t add,uint8_t len,uint8_t _reg)
 {
 	int32_t time1;
 	uint8_t i;
@@ -560,29 +583,29 @@ uint8_t MODH_WriteParam_Plasma_03H(uint8_t add,uint8_t _num,uint8_t _reg)
 	for (i = 0; i < NUM; i++)
 	{
 		//MODH_Send03H (SlaveAddr_1, _reg, _num);
-		MODH_Send00H_Plasma_OnOff(add,_num,_reg);
+		MODH_Send00H_Plasma_OnOff(add,len,_reg);
 		//time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-			run_t.gTimer_rs485_times=0;
+		//	run_t.gTimer_rs485_times=0;
 		//while (1)
-		{
-			bsp_Idle();
-
-			//if (bsp_CheckRunTime(time1) > TIMEOUT)//
-			if(run_t.gTimer_rs485_times> TIMEOUT)		
-			{
-				break;		/* 通信超时了 */
-			}
-			
-			if (g_tModH.fAck03H > 0)
-			{
-				break;
-			}
-		}
-		
-		if (g_tModH.fAck03H > 0)
-		{
-			break;
-		}
+//		{
+//		//	bsp_Idle();
+//
+//			//if (bsp_CheckRunTime(time1) > TIMEOUT)//
+//			if(run_t.gTimer_rs485_times> TIMEOUT)		
+//			{
+//				break;		/* 通信超时了 */
+//			}
+//			
+//			if (g_tModH.fAck03H > 0)
+//			{
+//				break;
+//			}
+//		}
+//		
+//		if (g_tModH.fAck03H > 0)
+//		{
+//			break;
+//		}
 	}
 	
 	if (g_tModH.fAck03H == 0)
@@ -614,27 +637,27 @@ uint8_t MODH_WriteParam_Ultrasonic_04H(uint8_t add,uint8_t _num,uint8_t _reg)
 		//MODH_Send04H (SlaveAddr_1, _reg, _num);
 		MODH_Send00H_Ultrasonic_OnOff(add,_num,_reg);
 		//time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-			run_t.gTimer_rs485_times=0;
+		//	run_t.gTimer_rs485_times=0;
 		//while (1)
-		{
-			bsp_Idle();
-
-			//if(bsp_CheckRunTime(time1) > TIMEOUT)//
-			if(run_t.gTimer_rs485_times> TIMEOUT)		//if (bsp_CheckRunTime(time1) > TIMEOUT)		
-			{
-				break;		/* 通信超时了 */
-			}
-			
-			if (g_tModH.fAck04H > 0)
-			{
-				break;
-			}
-		}
-		
-		if (g_tModH.fAck04H > 0)
-		{
-			break;
-		}
+//		{
+//		//	bsp_Idle();
+//
+//			//if(bsp_CheckRunTime(time1) > TIMEOUT)//
+//			if(run_t.gTimer_rs485_times> TIMEOUT)		//if (bsp_CheckRunTime(time1) > TIMEOUT)		
+//			{
+//				break;		/* 通信超时了 */
+//			}
+//			
+//			if (g_tModH.fAck04H > 0)
+//			{
+//				break;
+//			}
+//		}
+//		
+//		if (g_tModH.fAck04H > 0)
+//		{
+//			break;
+//		}
 	}
 	
 	if (g_tModH.fAck04H == 0)
@@ -679,11 +702,11 @@ void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t d
 *	形    参: 无
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************/
-void RS485_Host_Communication_Handler(void)
+void RS485_Host_Send_Communication_Handler(void)
 {
 
     static uint8_t rs485_run_flag,dry_flag=0xff,plasma_flag=0xff; 
-	static uint8_t  dry_off_flag=0xff,plasma_off_flag =0xff;
+	static uint8_t  dry_off_flag=0xff,plasma_off_flag =0xff,ultrsonic_off_flag=0xff;
 	 switch(run_t.rs485_Command_tag){
 
 
@@ -741,6 +764,21 @@ void RS485_Host_Communication_Handler(void)
 		   plasma_off_flag = run_t.rs485_send_plasma;
 
 		   MODH_WriteParam_Plasma_03H(0x00,0x01,0x00);
+
+
+		}
+
+        if(run_t.ultrasonic ==0 && (ultrsonic_off_flag !=run_t.rs485_send_ultrasonic)){
+
+		  ultrsonic_off_flag = run_t.rs485_send_ultrasonic;
+
+		  MODH_WriteParam_Ultrasonic_04H(0x00,0x01,0x00);
+
+		}
+		else if(run_t.ultrasonic ==1 && (ultrsonic_off_flag !=run_t.rs485_send_ultrasonic)){
+		   ultrsonic_off_flag = run_t.rs485_send_ultrasonic;
+
+		   MODH_WriteParam_Ultrasonic_04H(0x00,0x01,0x01);
 
 
 		}

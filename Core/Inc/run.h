@@ -168,6 +168,9 @@ typedef struct _RUN_T{
 	//rs485
 	 uint8_t rs485_send_plasma;
 	 uint8_t  rs485_send_dry;
+	 uint8_t rs485_send_ultrasonic;
+	 uint8_t  broadcast_send_flag;
+	 uint8_t broadcast_response_signal;
 
 	
 	

@@ -148,7 +148,7 @@ static void Single_Power_ReceiveCmd(uint8_t cmd)
 		//Answering_Signal_USART1_Handler(COMMAND_ID,ANSWER_POWER_OFF);
 	   run_t.RunCommand_Label= POWER_OFF;
        run_t.rs485_Command_tag =  POWER_OFF;
-        run_t.gTimer_rs485_times=0;
+       run_t.gTimer_rs485_times=0;
 
     cmd = 0xff;
     break;
@@ -248,8 +248,8 @@ static void Single_Command_ReceiveCmd(uint8_t cmd)
           
            run_t.gPlasma=0;
            run_t.rs485_send_times++;
-		    run_t.gTimer_rs485_times=0;
-			 run_t.rs485_send_plasma++;
+		   run_t.gTimer_rs485_times=0;
+		   run_t.rs485_send_plasma++;
        break;
 
        
@@ -264,21 +264,26 @@ static void Single_Command_ReceiveCmd(uint8_t cmd)
        case  FAN_LEVEL_MIN: //this is fan_speed_min, run_t.gFan_level = fan_speed_min;
 	     
            run_t.gFan_level = fan_speed_min;
+		   run_t.rs485_send_ultrasonic ++;
+	       run_t.ultrasonic = 0;
 		   Buzzer_KeySound();
       break;
 
       case FAN_LEVEL_MAX:
          run_t.gFan_level=fan_speed_max;
+		 run_t.rs485_send_ultrasonic ++;
+	     run_t.ultrasonic = 1;
          Buzzer_KeySound();
 
       break;
 
 	   case FAN_LEVEL_MAX_NO_SOUND: //this is fan_speed_max
-	   	 
+	   	  
 	      run_t.gFan_level=fan_speed_max;
 	  break;
 
        case FAN_STOP:
+	   	
          run_t.gFan_level=fan_speed_sotp;
         // Buzzer_KeySound();
 

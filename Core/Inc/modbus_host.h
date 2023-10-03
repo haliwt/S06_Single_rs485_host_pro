@@ -86,6 +86,12 @@ typedef enum{
 
 
 
+typedef enum
+{
+  SUCCESS_BROADCAST = 1,
+  FAIL_BROADCAST = !SUCCESS_BROADCAST
+} BroadcastStatus;
+
 
 typedef enum _mod_fun mod_fun_codes;
 
@@ -155,7 +161,7 @@ uint8_t MODH_WriteParam_Ultrasonic_04H(uint8_t addr,uint8_t _len,uint8_t _reg);
 uint8_t MODH_WriteParam_05H(uint16_t _reg, uint16_t _value);
 uint8_t MODH_WriteParam_06H(uint16_t _reg, uint16_t _value);
 uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t *_buf);
-void RS485_Host_Communication_Handler(void);
+void RS485_Host_Send_Communication_Handler(void);
 void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t data);
 
 

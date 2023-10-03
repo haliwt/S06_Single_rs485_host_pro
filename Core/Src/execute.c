@@ -77,6 +77,18 @@ void ActionEvent_Handler(void)
 		
 	}
 
+   if(run_t.ultrasonic ==1){
+
+      HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);//ultrasnoic ON 
+
+
+   }
+   else{
+
+       HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);//ultrasnoic off
+
+   }
+
    if(run_t.fan_warning ==0){
      Fan_Run_Fun();
   }
