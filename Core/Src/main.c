@@ -141,10 +141,11 @@ int main(void)
     if(run_t.decodeFlag ==0){
 	  
       RunCommand_MainBoard_Fun();
+	  bsp_Idle();
+	  RS485_Host_Send_Communication_Handler();
 	  
     }
-	bsp_Idle();
-	RS485_Host_Send_Communication_Handler();
+	
     USART1_Cmd_Error_Handler(&huart1);
 	
   }

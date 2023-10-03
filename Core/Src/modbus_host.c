@@ -337,6 +337,8 @@ static void MODH_Read_Address_01H(void)
 {
 	
 	uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data,fun_byte;
+
+	if(run_t.gPower_On == POWER_ON){
 	  
 	   bytes_zero = g_tModH.RxBuf[0];	/* 主机  地址   0x01 */
 	   byte_load_addr = g_tModH.RxBuf[1]; /* 从机地址，0x*/
@@ -389,11 +391,13 @@ static void MODH_Read_Address_01H(void)
 
                    case 0:
                       run_t.gDry = 0;
+			          SendWifiCmd_To_Order(WIFI_PTC_OFF);
 				   break;
 
 				   case 1:
 				      
 					run_t.gDry = 1;
+					 SendWifiCmd_To_Order(WIFI_PTC_ON);
 				   break;
 
 				}	
@@ -409,11 +413,13 @@ static void MODH_Read_Address_01H(void)
 
                    case 0:
                      run_t.gPlasma=0; 
+				     SendWifiCmd_To_Order(WIFI_KILL_OFF);
 				   break;
 
 				   case 1:
 				      
 				    run_t.gPlasma=1;
+					SendWifiCmd_To_Order(WIFI_KILL_ON);
 
 				   break;
 
@@ -431,10 +437,13 @@ static void MODH_Read_Address_01H(void)
 
                    case 0:
                        run_t.ultrasonic = 0;
+				      SendWifiCmd_To_Order(WIFI_ULTRASONIC_OFF);
 				   break;
 
 				   case 1:
 				     run_t.ultrasonic = 1;
+					 
+				   SendWifiCmd_To_Order(WIFI_ULTRASONIC_ON);
 
 				   break;
 
@@ -451,7 +460,7 @@ static void MODH_Read_Address_01H(void)
 	    }
 		
 	}
-
+    }
 	if(run_t.broadcast_send_flag == 1){
 
 	    if(run_t.gTimer_rs485_times> TIMEOUT)
@@ -462,6 +471,7 @@ static void MODH_Read_Address_01H(void)
 
 
 	}
+   
 }
 /*
 *********************************************************************************************************
