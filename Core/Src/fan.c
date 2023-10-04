@@ -4,6 +4,7 @@
 #include "run.h"
 #include "delay.h"
 #include "adc.h"
+#include "wifi_fun.h"
 
 
 
@@ -104,6 +105,70 @@ void Fan_Run_Fun(void)
 
    }
 
+
+}
+
+
+void POWER_KEY_INPUT_FUN(void)
+{
+    static uint8_t key_power;
+
+
+
+	if(POWER_KEY_INPUT()==0){
+        HAL_Delay(20);
+	if(POWER_KEY_INPUT()==0){
+       while(POWER_KEY_INPUT()==0);
+		if(run_t.gPower_On == POWER_ON){
+
+				key_power=1;
+			}
+			else{
+			   key_power=5;
+
+			}
+
+
+	   }
+
+     }
+
+	 if(key_power==1 && POWER_KEY_INPUT()==1){
+		key_power++;
+
+	    run_t.RunCommand_Label = POWER_OFF;
+		SendWifiCmd_To_Order(WIFI_POWER_OFF);
+		HAL_Delay(5);
+
+
+	 }
+	 else if(key_power==5 && POWER_KEY_INPUT()==1){
+      key_power++;
+	  run_t.RunCommand_Label = POWER_ON;
+	  SendWifiCmd_To_Order(WIFI_POWER_ON);
+	  HAL_Delay(5);
+
+
+	 }
+
+	 if(key_power==2){
+        key_power++;
+
+	    SendWifiCmd_To_Order(WIFI_POWER_OFF);
+		HAL_Delay(5);
+
+
+	 }
+
+	 if(key_power==6){
+
+	    key_power++;
+	 	
+	    SendWifiCmd_To_Order(WIFI_POWER_ON);
+	     HAL_Delay(5);
+
+
+	 }
 
 }
 

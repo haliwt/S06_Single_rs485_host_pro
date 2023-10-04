@@ -36,6 +36,7 @@
 #include "adc.h"
 #include "self_check.h"
 #include "bsp.h"
+#include "fan.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -100,6 +101,7 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM1_Init();
   MX_TIM3_Init(23,9,10); //100KHz
+  
   MX_TIM14_Init();
 //  MX_IWDG_Init();
  
@@ -137,8 +139,12 @@ int main(void)
 	/* --- 喂狗 */
 
 	Display_Decode_Function();
+
+     POWER_KEY_INPUT_FUN();
 	
     if(run_t.decodeFlag ==0){
+
+	 
 	  
       RunCommand_MainBoard_Fun();
 	  bsp_Idle();

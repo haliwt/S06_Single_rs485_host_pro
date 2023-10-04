@@ -23,7 +23,9 @@
 #define PLASMA_SetLow()             HAL_GPIO_WritePin(PLASMA_GPIO_Port,PLASMA_Pin,GPIO_PIN_RESET)    // output low level
 
 
-//#define FAN_DETECT_ERROR()         HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0)
+#define POWER_KEY_INPUT()         HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_13)    // output high level
+    
+
 
 
 
@@ -38,6 +40,7 @@ void Fan_CCW_Run_Min(void);
 
 void Fan_Run_Fun(void);
 
+void POWER_KEY_INPUT_FUN(void);
 
 
 
