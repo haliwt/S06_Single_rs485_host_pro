@@ -618,22 +618,12 @@ static void UartIRQ(UART_T *_pUart)
 	SET_BIT(_pUart->uart->ICR, UART_CLEAR_IDLEF);//  * @arg UART_CLEAR_IDLEF: IDLE line detected Clear Flag
 	SET_BIT(_pUart->uart->ICR, UART_CLEAR_TCF);		//  * @arg UART_CLEAR_TCF: Transmission Complete Clear Flag
 	SET_BIT(_pUart->uart->ICR, UART_CLEAR_LBDF);	//  * @arg UART_CLEAR_LBDF: LIN Break Detection Clear Flag
-	SET_BIT(_pUart->uart->ICR, UART_CLEAR_CTSF);
-	SET_BIT(_pUart->uart->ICR, UART_CLEAR_CMF);
-	SET_BIT(_pUart->uart->ICR, UART_CLEAR_WUF);
-	SET_BIT(_pUart->uart->ICR, UART_CLEAR_TXFECF);
-	
+	SET_BIT(_pUart->uart->ICR, UART_CLEAR_CTSF);   //  *  @arg UART_CLEAR_CTSF: CTS Interrupt Clear Flag
+	SET_BIT(_pUart->uart->ICR, UART_CLEAR_CMF);    //  * @arg UART_CLEAR_CMF: Character Match Clear Flag
+	SET_BIT(_pUart->uart->ICR, UART_CLEAR_WUF);	//  *  @arg.UART_CLEAR_WUF:  Wake Up from stop mode Clear Flag
+	SET_BIT(_pUart->uart->ICR, UART_CLEAR_TXFECF);//  *   @arg UART_CLEAR_TXFECF: TXFIFO empty Clear Flag
+	SET_BIT(_pUart->uart->ICR, UART_CLEAR_RTOF);	//*@arg UART_CLEAR_RTOF: Receiver Time Out Clear Flag
 
-
-
-
-
-
-//  *            @arg UART_CLEAR_CTSF: CTS Interrupt Clear Flag
-//  *            @arg UART_CLEAR_RTOF: Receiver Time Out Clear Flag
-//  *            @arg UART_CLEAR_CMF: Character Match Clear Flag
-//  *            @arg.UART_CLEAR_WUF:  Wake Up from stop mode Clear Flag
-//  *            @arg UART_CLEAR_TXFECF: TXFIFO empty Clear Flag	
 }
 
 /*

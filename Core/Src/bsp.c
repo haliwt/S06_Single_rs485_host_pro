@@ -34,8 +34,8 @@ void bsp_GetCpuID(void)
 		uint32_t CPU_Sn0, CPU_Sn1, CPU_Sn2;
 		
 		CPU_Sn0 = *(__IO uint32_t*)(UID_BASE); //(0x1FFF7590);
-		CPU_Sn1 = *(__IO uint32_t*)(UID_BASE+ 4);
-		CPU_Sn2 = *(__IO uint32_t*)(UID_BASE + 8);
+		CPU_Sn1 = *(__IO uint32_t*)(UID_BASE + 4U);
+		CPU_Sn2 = *(__IO uint32_t*)(UID_BASE + 8U);
 
 		printf("CPU : STM32H743XIH6, BGA240, 主频: %dMHz\r\n", SystemCoreClock / 1000000);
 		printf("UID = %08X %08X %08X\r\n", CPU_Sn2, CPU_Sn1, CPU_Sn0);

@@ -303,6 +303,7 @@ void MODH_Poll(void)
 		{
 			g_tModH.RxCount = 0;	/* 必须清零计数器，方便下次帧同步 */
 			g_tModH.Rx_rs485_data_flag=0;
+			//if(g_tModH.RxBuf[0]==0)run_t.broadcast_response_signal = FAIL_BROADCAST;
 			Answerback_RS485_Signal(g_tModH.RxBuf[1],0xff,g_tModH.RxBuf[3],0x01);
 		}
 		else{
@@ -792,6 +793,14 @@ void RS485_Host_Send_Communication_Handler(void)
 
 
 		}
+
+   }
+
+   if(run_t.broadcast_response_signal != SUCCESS_BROADCAST){
+       run_t.broadcast_response_signal ++;
+		run_t.rs485_send_ultrasonic++;
+         run_t.rs485_send_plasma ++;
+		 run_t.rs485_send_dry++;
 
    }
 

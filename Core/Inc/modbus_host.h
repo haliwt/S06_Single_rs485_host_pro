@@ -88,8 +88,8 @@ typedef enum{
 
 typedef enum
 {
-  SUCCESS_BROADCAST = 1,
-  FAIL_BROADCAST = !SUCCESS_BROADCAST
+  SUCCESS_BROADCAST ,
+  FAIL_BROADCAST !=SUCCESS_BROADCAST
 } BroadcastStatus;
 
 
