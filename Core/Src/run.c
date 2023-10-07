@@ -465,9 +465,16 @@ static void Current_Works_State(void)
 
 				if(run_t.gTimer_ptc_adc_times > 64){ //3 minutes 120s
 					run_t.gTimer_ptc_adc_times=0;
-					Get_PTC_Temperature_Voltage(ADC_CHANNEL_1,5);
-					//run_t.ptc_temp_voltage=200;
-					Judge_PTC_Temperature_Value();
+					if(run_t.ptc_warning ==0){
+						Get_PTC_Temperature_Voltage(ADC_CHANNEL_1,5);
+						//run_t.ptc_temp_voltage=200;
+						Judge_PTC_Temperature_Value();
+					}
+					else if(run_t.ptc_warning ==1){
+
+						Buzzer_Ptc_Error_Sound();
+
+					}
 
 
 				}
@@ -479,13 +486,18 @@ static void Current_Works_State(void)
 				if(run_t.gTimer_fan_adc_times > 72){ //2 minute 180s
 					run_t.gTimer_fan_adc_times =0;
 
-				   if(run_t.gFan_level !=fan_speed_sotp){
+				   if(run_t.gFan_level !=fan_speed_sotp && run_t.fan_warning==0){
 					Get_Fan_Adc_Fun(ADC_CHANNEL_0,5);
-					HAL_Delay(10);
+					HAL_Delay(1);
 	                }
+				   else if(run_t.fan_warning==1){
+
+					 Buzzer_Fan_Error_Sound();
+
+				   }
 
 				}
-	              run_state =4;
+	            run_state =4;
 			break;
 
 
