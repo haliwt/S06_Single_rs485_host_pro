@@ -497,6 +497,7 @@ uint8_t MODH_WriteParam_Power_01H(uint8_t add,uint8_t _num,uint8_t _reg)
 		MODH_Send00H_Power_OnOff(add,_num,_reg);
 		run_t.gTimer_rs485_times=0;
 		run_t.broadcast_send_flag = 1;	
+		return 1;
 		#if 0
 		while (1)
 		{

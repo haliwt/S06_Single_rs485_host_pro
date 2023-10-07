@@ -91,6 +91,7 @@ int main(void)
   MX_TIM3_Init();
   
   MX_TIM14_Init();
+  MX_TIM16_Init(9,10); //fan is frequency is 100K ,duty =100%
   MX_IWDG_Init();
  
   MX_ADC1_Init();

@@ -12,7 +12,8 @@
 void Fan_CCW_Run_Max(void)
 {
    FAN_CW_SetLow();
-  
+   MX_TIM16_Init(9,10); //100KHZ,duty =100%
+   HAL_TIM_PWM_Start(&htim16,TIM_CHANNEL_1);
   
   
 }
@@ -20,19 +21,17 @@ void Fan_CCW_Run_Max(void)
 void Fan_CCW_Run_Min(void)
 {
     FAN_CW_SetLow();
+    MX_TIM16_Init(99,50); //10KHZ,duty =50%
+    HAL_TIM_PWM_Start(&htim16,TIM_CHANNEL_1);
    
-   
-
-
-
 }
 
  
 void FAN_Stop(void)
 {
-    FAN_CCW_SetLow(); //brake
+  FAN_CCW_SetLow(); //brake
   
-  
+  HAL_TIM_PWM_Stop(&htim16,TIM_CHANNEL_1);
     
 }
 void ShutDown_AllFunction(void)
