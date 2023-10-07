@@ -271,32 +271,7 @@ static void MODH_RxTimeOut(void)
 void MODH_Poll(void)
 {	
 	uint16_t crc1 ;
-	
-#if 0	
-	if (g_modh_timeout == 0)	/* 超过3.5个字符时间后执行MODH_RxTimeOut()函数。全局变量 g_rtu_timeout = 1 */
-	{
-		/* 没有超时，继续接收。不要清零 g_tModH.RxCount */
-		return ;
-	}
-
-	/* 收到命令
-		05 06 00 88 04 57 3B70 (8 字节)
-			05    :  数码管屏的号站，
-			06    :  指令
-			00 88 :  数码管屏的显示寄存器
-			04 57 :  数据,,,转换成 10 进制是 1111.高位在前,
-			3B70  :  二个字节 CRC 码	从05到 57的校验
-	*/
-	g_modh_timeout = 0;
-    HAL_UART_Receive_DMA(&huart2,g_tModH.RxBuf, 0x07);
-	/* 接收到的数据小于4个字节就认为错误，地址（8bit）+指令（8bit）+操作寄存器（16bit） */
-	/* 发送地址+本地地址+功能码+数据长度+数据+CRC16(2BYTE)*/
-	if (g_tModH.RxCount < 5)
-	{
-		goto err_ret;
-	}
-#endif 
-    if(g_tModH.Rx_rs485_data_flag == rx_rs485_data_success){
+	if(g_tModH.Rx_rs485_data_flag == rx_rs485_data_success){
 		/* 计算CRC校验和，这里是将接收到的数据包含CRC16值一起做CRC16，结果是0，表示正确接收 */
 		crc1 = CRC16_Modbus(g_tModH.RxBuf,g_tModH.RxCount);
 		if (crc1 != 0)
@@ -337,15 +312,15 @@ void MODH_Poll(void)
 static void MODH_Read_Address_01H(void)
 {
 	
-	uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data,fun_byte;
+	uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data;
 
 	if(run_t.gPower_On == POWER_ON){
 	  
-	   bytes_zero = g_tModH.RxBuf[0];	/* 主机  地址   0x01 */
-	   byte_load_addr = g_tModH.RxBuf[1]; /* 从机地址，0x*/
-	   byte_fun_code = g_tModH.RxBuf[2];
-	   byte_len = g_tModH.RxBuf[3];
-	   byte_data = g_tModH.RxBuf[4];
+	   bytes_zero = g_tModH.RxBuf[0];		/* 主机  地址   0x01 */
+	   byte_load_addr = g_tModH.RxBuf[1]; 	/* 从机地址，0x*/
+	   byte_fun_code = g_tModH.RxBuf[2];  	/* 功能码 */
+	   byte_len = g_tModH.RxBuf[3];       	/* 数据长度 */
+	   byte_data = g_tModH.RxBuf[4];      	/* 数据    */
 
 	   if(bytes_zero ==0 && run_t.broadcast_send_flag ==1){
 
@@ -361,7 +336,7 @@ static void MODH_Read_Address_01H(void)
 	  
 		switch (byte_fun_code)
 		{
-			case mod_power: //0x0101
+			case fun_mod_power: //0x0101
 				
 				switch(byte_data){
 
@@ -384,7 +359,7 @@ static void MODH_Read_Address_01H(void)
 				
 			break;
 
-			case mod_ptc:
+			case fun_mod_ptc:
 
 			   if(run_t.gPower_On == POWER_ON){
 			  
@@ -406,7 +381,7 @@ static void MODH_Read_Address_01H(void)
 			   }
 			break;
 
-			case mod_plasma:
+			case fun_mod_plasma:
 
 				 if(run_t.gPower_On == POWER_ON){
 			   
@@ -430,7 +405,7 @@ static void MODH_Read_Address_01H(void)
 
 			break;
 
-			case mod_ulrasonic:
+			case fun_mod_ultrasonic:
 
 			    if(run_t.gPower_On == POWER_ON){
 				
@@ -455,9 +430,38 @@ static void MODH_Read_Address_01H(void)
 
 			break;
 
-			case mod_fan:
+			case fun_mod_fan:
 
 			break;
+
+			case fun_fault_code:
+				 if(run_t.gPower_On == POWER_ON){
+					 switch(byte_data){
+
+					 case fan_fault: //fan_fault
+
+					 	g_tModH.slave_machine_fan_warning = 1;
+
+					 break;
+
+
+					 case ptc_fault: //ptc_fault 
+                        g_tModH.slave_machine_ptc_warning = 1;
+
+					 break;
+
+
+
+
+
+					 }
+
+
+				 }
+
+			break;
+
+			
 	    }
 		
 	}
@@ -699,7 +703,7 @@ void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t d
 	g_tModH.TxBuf[g_tModH.TxCount++] = data;		/* 数据 */
 	
 	MODH_SendAckWithCRC();		/* 发送数据，自动加CRC */
-	g_tModH.fAck02H = 0;		/* 清接收标志 */
+	/* 清接收标志 */
 	//g_tModH.RegNum = _num;		/* 寄存器个数 */
 	//g_tModH.Reg02H = _reg;		/* 保存02H指令中的寄存器地址，方便对应答数据进行分类 */	
 

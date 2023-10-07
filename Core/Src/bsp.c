@@ -80,13 +80,9 @@ void Error_Modbus_Handler(char *file, uint32_t line)
 */
 void bsp_Idle(void)
 {
-//	/* --- 喂狗 */
-//    if(run_t.gTimer_dogfood_times > 0){
-//	   run_t.gTimer_dogfood_times =0;
-//      HAL_IWDG_Refresh(&hiwdg);
-//
-//    }
-	
+	/* --- 喂狗 */
+   
+    iwdg_feed();
 	
 	/* --- 让CPU进入休眠，由Systick定时中断唤醒或者其他中断唤醒 */
 

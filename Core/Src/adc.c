@@ -22,13 +22,8 @@
 
 /* USER CODE BEGIN 0 */
 #include <stdio.h>
-#include "buzzer.h"
-#include "run.h"
-#include "fan.h"
-#include "usart.h"
-#include "cmd_link.h"
-#include "publish.h"
-#include "delay.h"
+
+#include "bsp.h"
 
 
 
@@ -260,18 +255,9 @@ void Judge_PTC_Temperature_Value(void)
         run_t.ptc_too_heat_value =1;
 		run_t.ptc_warning =1;
         SendWifiCmd_To_Order(PTC_WARNING_ITEM);
+		Buzzer_Ptc_Error_Sound();
 
-         Buzzer_KeySound();
-
-		HAL_Delay(200);
-       Buzzer_KeySound();
-       HAL_Delay(100);
-	   Buzzer_KeySound();
-       HAL_Delay(100);
-	   Buzzer_KeySound();
-       HAL_Delay(100);
-	   Buzzer_KeySound();
-       HAL_Delay(100);
+        
    	      
    }
    
@@ -311,16 +297,9 @@ void Get_Fan_Adc_Fun(uint32_t channel,uint8_t times)
 			   		detect_error_times=0;
 		           run_t.fan_warning = 1;
 				
-			       HAL_Delay(200);
-			       Buzzer_KeySound();
-			       HAL_Delay(100);
-				   Buzzer_KeySound();
-			       HAL_Delay(100);
-				   Buzzer_KeySound();
-			       HAL_Delay(100);
-				   Buzzer_KeySound();
-			       HAL_Delay(100);
+			      
 				   SendWifiCmd_To_Order(FAN_WARNING_ITEM);
+				   Buzzer_Fan_Error_Sound();
 				  
 
 			   	}

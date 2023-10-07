@@ -114,9 +114,9 @@ void MX_TIM1_Init(void)
 
 }
 /* TIM3 init function */
-/* fan output PWM */
+/* Buzzer output PWM */
 /* TIM3 init function */
-void MX_TIM3_Init(uint8_t freq,uint8_t tim,uint8_t duty)
+void MX_TIM3_Init(void)
 {
 
   /* USER CODE BEGIN TIM3_Init 0 */
@@ -131,9 +131,9 @@ void MX_TIM3_Init(uint8_t freq,uint8_t tim,uint8_t duty)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = freq;//24/(11+1)
+  htim3.Init.Prescaler = 23;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = tim;//100K
+  htim3.Init.Period = 499;//65535; 5KHz
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -156,10 +156,10 @@ void MX_TIM3_Init(uint8_t freq,uint8_t tim,uint8_t duty)
     Error_Handler();
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
-  sConfigOC.Pulse = duty;
+  sConfigOC.Pulse = 250; //PWM of duty 50%
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
   {
     Error_Handler();
   }
@@ -169,6 +169,7 @@ void MX_TIM3_Init(uint8_t freq,uint8_t tim,uint8_t duty)
   HAL_TIM_MspPostInit(&htim3);
 
 }
+
 
 /* TIM14 init function */
 void MX_TIM14_Init(void)
@@ -280,16 +281,16 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 
   /* USER CODE END TIM3_MspPostInit 0 */
 
-    __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
     /**TIM3 GPIO Configuration
-       PA6     ------> TIM3_CH1
+       PB1     ------> TIM3_CH4
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_6;
+    GPIO_InitStruct.Pin = GPIO_PIN_1;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF1_TIM3;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN TIM3_MspPostInit 1 */
 

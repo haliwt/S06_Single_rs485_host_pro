@@ -1,16 +1,5 @@
 #include "run.h"
-#include <stdio.h>
-#include "usart.h"
-#include "dht11.h"
-#include "fan.h"
-#include "tim.h"
-#include "cmd_link.h"
-#include "buzzer.h"
-#include "flash.h"
-#include "execute.h"
-#include "adc.h"
-#include "self_check.h"
-
+#include "bsp.h"
 RUN_T run_t; 
 
 static void Single_Power_ReceiveCmd(uint8_t cmd);
@@ -370,6 +359,8 @@ void RunCommand_MainBoard_Fun(void)
 		 run_t.ptc_warning =0;
 		 run_t.gTimer_ptc_adc_times=0;
 		 run_t.open_ptc_detected_flag=0;
+		 g_tModH.slave_machine_fan_warning = 0; //H -host
+		 g_tModH.slave_machine_ptc_warning = 0;
     
      	SetPowerOn_ForDoing();
 
@@ -543,15 +534,7 @@ static void Current_Works_State(void)
 				 printf("fan_warning\n");
 
 				#endif
-		       HAL_Delay(200);
-		       Buzzer_KeySound();
-		       HAL_Delay(100);
-			   Buzzer_KeySound();
-		       HAL_Delay(100);
-			   Buzzer_KeySound();
-		       HAL_Delay(100);
-			   Buzzer_KeySound();
-		       HAL_Delay(100);
+		       Buzzer_Fan_Error_Sound();
 			   SendWifiCmd_To_Order(FAN_WARNING_ITEM);
 			  
                	}
@@ -568,16 +551,7 @@ static void Current_Works_State(void)
 				 printf("ptc_warning\n");
 
 				#endif 
-		         Buzzer_KeySound();
-                HAL_Delay(200);
-		       Buzzer_KeySound();
-		       HAL_Delay(100);
-			   Buzzer_KeySound();
-		       HAL_Delay(100);
-			   Buzzer_KeySound();
-		       HAL_Delay(100);
-			   Buzzer_KeySound();
-		       HAL_Delay(100);
+		       Buzzer_Ptc_Error_Sound(); 
 			   SendWifiCmd_To_Order(PTC_WARNING_ITEM);
 		     }
 

@@ -62,18 +62,24 @@
 
 typedef enum {
 
-  mod_power =0x01,
-  mod_ptc,
-  mod_plasma,
-  mod_ulrasonic,
-  mod_fan,
-  mod_set_timer_power_on,
-  mod_set_timer_power_off,
-  mod_set_temperature_value,
-  mod_fan_error,
-  mod_ptc_error,
+  fun_mod_power =0x01,
+  fun_mod_ptc,
+  fun_mod_plasma,
+  fun_mod_ultrasonic,
+  fun_mod_fan,
+  fun_fault_code = 0xff
    
-}_mod_fun;
+}fun_code_name;
+
+typedef enum{
+
+   off,
+   open,
+   fan_fault = 0xA0,
+   ptc_fault = 0xB0
+
+
+}data_fun_name;
 
 
 
@@ -89,7 +95,7 @@ typedef enum{
 typedef enum
 {
   SUCCESS_BROADCAST ,
-  FAIL_BROADCAST !=SUCCESS_BROADCAST
+  FAIL_BROADCAST 
 } BroadcastStatus;
 
 
@@ -110,12 +116,15 @@ typedef struct
 	uint8_t TxBuf[H_TX_BUF_SIZE];
 	uint8_t TxCount;
 	
-	uint8_t mod_power;//Reg01H;		/* 保存主机发送的寄存器首地址 */
-	uint8_t mod_ptc;//Reg02H;
-	uint8_t mod_plasma;//Reg03H;		
-	uint8_t mod_fan;//Reg04H;
+	uint8_t fun_mod_power;//Reg01H;		/* 保存主机发送的寄存器首地址 */
+	uint8_t fun_mod_ptc;//Reg02H;
+	uint8_t fun_mod_plasma;//Reg03H;		
+	uint8_t fun_mod_fan;//Reg04H;
 
 	uint8_t RegNum;			/* 寄存器个数 */
+
+	uint8_t slave_machine_fan_warning;
+	uint8_t slave_machine_ptc_warning;
 
 	uint8_t fAck01H;		/* 应答命令标志 0 表示执行失败 1表示执行成功 */
 	uint8_t fAck02H;

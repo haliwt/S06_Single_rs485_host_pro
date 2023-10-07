@@ -59,6 +59,22 @@
 #include "tim.h"
 #include "run.h"
 #include "wifi_fun.h"
+#include "bsp_beep.h"
+#include "fan.h"
+#include "cmd_link.h"
+#include "publish.h"
+#include "delay.h"
+
+
+#include "dht11.h"
+#include "fan.h"
+
+#include "flash.h"
+#include "execute.h"
+#include "adc.h"
+#include "self_check.h"
+
+
 
 void bsp_Init(void);
 void bsp_Idle(void);
