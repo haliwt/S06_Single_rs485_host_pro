@@ -65,6 +65,9 @@ void Decode_RunCmd(void)
 	  	if(run_t.gPower_On==POWER_ON){
               
              run_t.set_temperature_value = cmdType_2;
+			 run_t.rs485_send_temperature_value++;
+		     MODH_WriteParam_SetTempValue_B0H(0x00,0x01,run_t.set_temperature_value);
+			 
 		     #if DEBUG
 
 			 printf("rx_ds_data\n");
@@ -361,7 +364,7 @@ void RunCommand_MainBoard_Fun(void)
 		 run_t.open_ptc_detected_flag=0;
 		 g_tModH.slave_machine_fan_warning = 0; //H -host
 		 g_tModH.slave_machine_ptc_warning = 0;
-    
+          run_t.gFan_level=fan_speed_max;
      	SetPowerOn_ForDoing();
 
 		

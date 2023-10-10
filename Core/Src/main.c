@@ -92,7 +92,7 @@ int main(void)
   
   MX_TIM14_Init();
   MX_TIM16_Init(9,10); //fan is frequency is 100K ,duty =100%
-  MX_IWDG_Init();
+ // MX_IWDG_Init();
  
   MX_ADC1_Init();
   MX_USART1_UART_Init();
@@ -102,7 +102,7 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim14);//HAL_TIM_Base_Start(&htim3);
   UART_Start_Receive_IT(&huart1,inputBuf,1);
   UART_Start_Receive_IT(&huart2, g_tModH.rs485_RxInputBuf,0x07);
-
+  run_t.gFan_level=fan_speed_max;
   #if DEBUG
    printf("Initialize is over\n");
   #endif 
@@ -122,6 +122,10 @@ int main(void)
         power_on_the_first++;
         Buzzer_KeySound();
 	    run_t.gTimer_rs485_times =0;
+		g_tModH.slave_Id[0] =0;
+		g_tModH.slave_Id[1] =0;
+		g_tModH.slave_Id[2] =0;
+		g_tModH.slave_Id[3] =0;
     
     }
 	Display_Decode_Function();

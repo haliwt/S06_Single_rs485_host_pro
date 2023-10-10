@@ -65,6 +65,9 @@ typedef enum{
 	 PTC_WARNING_ITEM= 0xE1,
 	 FAN_WARNING_ITEM = 0xE2,
 
+	 SLAVE_PTC_WARNING= 0xD1,
+	 SLAVE_FAN_WARNING= 0xD2,
+
 	 FAN_REMOVE_WARNING_ITEM = 0xF2
      
 
@@ -169,8 +172,8 @@ typedef struct _RUN_T{
 	 uint8_t rs485_send_plasma;
 	 uint8_t  rs485_send_dry;
 	 uint8_t rs485_send_ultrasonic;
-	 uint8_t  broadcast_send_flag;
-	 uint8_t broadcast_response_signal;
+	 uint8_t rs485_send_temperature_value;
+	 
 	 uint8_t gTimer_dogfood_times;
 
 	

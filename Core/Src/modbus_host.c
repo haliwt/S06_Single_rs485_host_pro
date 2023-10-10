@@ -17,7 +17,7 @@
 *	                                   变量
 *********************************************************************************************************
 */
-#define TIMEOUT		1000		/* 接收命令超时时间, 单位ms */
+#define TIMEOUT		0		/* 接收命令超时时间, 单位ms */
 #define NUM			1			/* 循环发送次数 */
 
 /*
@@ -52,6 +52,11 @@ MODH_T g_tModH = {0};
 VAR_T g_tVar;
 uint8_t crc16_check_flag;
 
+static void Rx485_Receive_Slave_Id(uint8_t id);
+
+static uint8_t findMaxPos(uint8_t *ptarr,uint8_t n);
+static void Selection_Sort(uint8_t *ptarr,uint8_t len);
+static void MODH_Read_Address_Info(void);
 
 
 
@@ -109,30 +114,17 @@ static void MODH_SendAckWithCRC(void)
 	MODH_SendPacket(g_tModH.TxBuf, g_tModH.TxCount);
 }
 
-/*
-*********************************************************************************************************
-*	函 数 名: MODH_AnalyzeApp
-*	功能说明: 分析应用层协议。处理应答。
-*	形    参: 无
-*	返 回 值: 无
-*********************************************************************************************************
-*/
-static void MODH_AnalyzeApp(void)
-{	
-	
-    MODH_Read_Address_01H();
-	   
-}
-/*
-*********************************************************************************************************
+
+
+/*********************************************************************************************************
 *	函 数 名: MODH_Send00H
 *	功能说明: 发送00H指令，查询所有从机线圈寄存器 功能码 0x01
 *	形    参: _addr : 从站地址
 *			  _reg : 寄存器编号
 *			  _num : 寄存器个数
 *	返 回 值: 无
-*********************************************************************************************************
-*/
+*********************************************************************************************************/
+
 void MODH_Send00H_Power_OnOff(uint8_t _addr, uint8_t _data_len,uint8_t _data)
 {
 	g_tModH.TxCount = 0;
@@ -168,7 +160,7 @@ void MODH_Send00H_Ptc_OnOff(uint8_t _addr,uint8_t _data_len,uint8_t _data)
 	g_tModH.TxBuf[g_tModH.TxCount++] = _data;		/* 数据 */	
 	
 	MODH_SendAckWithCRC();		/* 发送数据，自动加CRC */
-	g_tModH.fAck01H = 0;		/* 清接收标志 */
+	g_tModH.fAck02H = 0;		/* 清接收标志 */
 	//g_tModH.RegNum = _num;		/* 寄存器个数 */
 	//g_tModH.Reg01H = _reg;		/* 保存01H指令中的寄存器地址，方便对应答数据进行分类 */	
 }
@@ -193,7 +185,7 @@ void MODH_Send00H_Plasma_OnOff(uint8_t _addr,uint8_t _data_len,uint8_t _data)
 	g_tModH.TxBuf[g_tModH.TxCount++] = _data;		/* 数据 */
 	
 	MODH_SendAckWithCRC();		/* 发送数据，自动加CRC */
-	g_tModH.fAck02H = 0;		/* 清接收标志 */
+	g_tModH.fAck03H = 0;		/* 清接收标志 */
 	//g_tModH.RegNum = _num;		/* 寄存器个数 */
 	//g_tModH.Reg02H = _reg;		/* 保存02H指令中的寄存器地址，方便对应答数据进行分类 */	
 }
@@ -218,7 +210,7 @@ void MODH_Send00H_Ultrasonic_OnOff(uint8_t _addr,uint8_t _data_len,uint8_t _data
 	g_tModH.TxBuf[g_tModH.TxCount++] = _data;		/* 数据 */
 	
 	MODH_SendAckWithCRC();		/* 发送数据，自动加CRC */
-	g_tModH.fAck03H = 0;		/* 清接收标志 */
+	g_tModH.fAck04H = 0;		/* 清接收标志 */
 	//g_tModH.RegNum = _num;		/* 寄存器个数 */
 	//g_tModH.Reg03H = _reg;		/* 保存03H指令中的寄存器地址，方便对应答数据进行分类 */	
 }
@@ -243,10 +235,36 @@ void MODH_Send00H_Fan_OnOff(uint8_t _addr,uint8_t _data_len,uint8_t _data)
 	g_tModH.TxBuf[g_tModH.TxCount++] = _data;		/* 数据 */
 	
 	MODH_SendAckWithCRC();		/* 发送数据，自动加CRC */
-	g_tModH.fAck04H = 0;		/* 清接收标志 */
+	g_tModH.fAck05H = 0;		/* 清接收标志 */
 	//g_tModH.RegNum = _num;		/* 寄存器个数 */
 	//g_tModH.Reg04H = _reg;		/* 保存04H指令中的寄存器地址，方便对应答数据进行分类 */	
 }
+/*
+*********************************************************************************************************
+*	函 数 名: MODH_SendB0H
+*	功能说明: 发送B4H指令，设置温度值
+*	形    参: _addr : 从站地址
+*			  _reg : 寄存器编号
+*			  _num : 寄存器个数
+*	返 回 值: 无
+*********************************************************************************************************
+*/
+void MODH_SendB0H_SetTemperature_Value(uint8_t _addr,uint8_t _data_len,uint8_t _data)
+{
+	g_tModH.TxCount = 0;
+	g_tModH.TxBuf[g_tModH.TxCount++] = _addr;		/* 从站地址 发送地址 */
+	g_tModH.TxBuf[g_tModH.TxCount++] = MasterAddr;  /* 本地地址*/
+	g_tModH.TxBuf[g_tModH.TxCount++] = 0xB0;		/* 功能码 风扇开或者关闭 */	
+	g_tModH.TxBuf[g_tModH.TxCount++] = _data_len;	/* 数据长度*/
+	g_tModH.TxBuf[g_tModH.TxCount++] = _data;		/* 数据 */
+	
+	MODH_SendAckWithCRC();		/* 发送数据，自动加CRC */
+	g_tModH.fAckb0H = 0;		/* 清接收标志 */
+	//g_tModH.RegNum = _num;		/* 寄存器个数 */
+	//g_tModH.Reg04H = _reg;		/* 保存04H指令中的寄存器地址，方便对应答数据进行分类 */	
+}
+/*
+
 /*
 *********************************************************************************************************
 *	函 数 名: MODH_RxTimeOut
@@ -299,44 +317,164 @@ void MODH_Poll(void)
 
 	
 }
-
 /*
 *********************************************************************************************************
+*	函 数 名: MODH_AnalyzeApp
+*	功能说明: 分析应用层协议。处理应答。
+*	形    参: 无
+*	返 回 值: 无
+*********************************************************************************************************
+*/
+static void MODH_AnalyzeApp(void)
+{	
+	
+    //MODH_Read_Address_01H();
+      MODH_Read_Address_Info();
+	   
+}
+/*******************************************************************************************************
+*	函 数 名: MODH_AnalyzeApp
+*	功能说明: 分析应用层协议。处理应答。
+*	形    参: 无
+*	返 回 值: 无
+
+*******************************************************************************************************/
+static void MODH_Read_Address_Info(void)
+{
+   uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data;
+   static uint8_t sort_times;
+	if(run_t.gPower_On == POWER_ON){
+	  
+	   bytes_zero =    g_tModH.RxBuf[0];    /* 主机  地址   0x01 */
+	   byte_load_addr =g_tModH.RxBuf[1]; 	/* 从机地址，0x*/
+	   byte_fun_code = g_tModH.RxBuf[2];  	/* 功能码 */
+	   byte_len = 	   g_tModH.RxBuf[3];    /* 数据长度 */
+	   byte_data =	   g_tModH.RxBuf[4];    /* 数据    */
+	}
+	 if(g_tModH.RxBuf[0]==0){
+
+	    
+		 g_tModH.rx485_receive_fun_code = byte_fun_code;
+		
+
+	switch(g_tModH.RxBuf[2]){
+
+	  case 0x01:
+	  	
+
+	   g_tModH.fAck01H = 1;
+
+	  break;
+
+	  case 0x02:
+	  	g_tModH.fAck02H = 1;
+
+	  break;
+
+	  case 0x03:
+	  	g_tModH.fAck03H = 1;
+
+	  break;
+
+	  case 0x04:
+	  	g_tModH.fAck04H = 1;
+
+	  break;
+
+	  case 0x05:
+		g_tModH.fAck05H = 1;
+	  break;
+
+	  case 0xb0:
+	  	g_tModH.fAckb0H = 1;
+
+	  break;
+
+     }
+
+   }
+   else if(g_tModH.RxBuf[0]==MasterAddr){
+		Answerback_RS485_Signal(byte_load_addr,byte_fun_code,byte_len,byte_data);
+		Rx485_Receive_Slave_Id(byte_load_addr);
+        if(g_tModH.slave_Id[3] != 0 && sort_times < 2){
+            sort_times++;
+         	Selection_Sort(g_tModH.slave_Id,4);
+		}
+
+
+	 switch(g_tModH.RxBuf[2]){
+		case fun_fault_code:
+			switch(byte_data){
+
+					 case fan_fault: //fan_fault
+
+					 	g_tModH.slave_machine_fan_warning = 1;
+					    SendWifiCmd_To_Order(SLAVE_FAN_WARNING);
+
+					 break;
+
+
+					 case ptc_fault: //ptc_fault 
+                        g_tModH.slave_machine_ptc_warning = 1;
+						SendWifiCmd_To_Order(SLAVE_PTC_WARNING);
+
+					 break;
+					}
+				
+
+			break;
+			}
+
+
+   }
+}
+
+
+/**********************************************************************************************************
 *	函 数 名: MODH_Read_01H
 *	功能说明: 分析01H指令的应答数据，读取线圈状态，bit访问
 *             [发送的地址]+[本机地址]+[功能码]+[数据长度]+[数据]+[CRC16低]+[CRC16高]
 *	形    参: 无
 *	返 回 值: 无
-*********************************************************************************************************
-*/
+**********************************************************************************************************/
+#if 0
 static void MODH_Read_Address_01H(void)
 {
 	
+    static uint8_t sort_times;
 	uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data;
 
 	if(run_t.gPower_On == POWER_ON){
 	  
-	   bytes_zero = g_tModH.RxBuf[0];		/* 主机  地址   0x01 */
-	   byte_load_addr = g_tModH.RxBuf[1]; 	/* 从机地址，0x*/
+	   bytes_zero =    g_tModH.RxBuf[0];    /* 主机  地址   0x01 */
+	   byte_load_addr =g_tModH.RxBuf[1]; 	/* 从机地址，0x*/
 	   byte_fun_code = g_tModH.RxBuf[2];  	/* 功能码 */
-	   byte_len = g_tModH.RxBuf[3];       	/* 数据长度 */
-	   byte_data = g_tModH.RxBuf[4];      	/* 数据    */
+	   byte_len = 	   g_tModH.RxBuf[3];    /* 数据长度 */
+	   byte_data =	   g_tModH.RxBuf[4];    /* 数据    */
 
-	   if(bytes_zero ==0 && run_t.broadcast_send_flag ==1){
+	   if(bytes_zero ==0 && g_tModH.broadcast_send_flag ==1 ){
 
 	     run_t.broadcast_response_signal = SUCCESS_BROADCAST;
-		 run_t.broadcast_send_flag =0;
+		 g_tModH.rx485_receive_fun_code = byte_fun_code;
+		 g_tModH.broadcast_send_flag =0;
+		 g_tModH.slave_Id[0]= byte_load_addr;
 
 	   }
        else if(bytes_zero == MasterAddr){
 
 	   	Answerback_RS485_Signal(byte_load_addr,byte_fun_code,byte_len,byte_data);
-	   
-	   
-	  
+		Rx485_Receive_Slave_Id(byte_load_addr);
+        if(g_tModH.slave_Id[3] != 0 && sort_times < 2){
+            sort_times++;
+         	Selection_Sort(g_tModH.slave_Id,4);
+		}
+
+		
 		switch (byte_fun_code)
 		{
 			case fun_mod_power: //0x0101
+
+			    g_tModH.rx485_receive_fun_code = power_order;
 				
 				switch(byte_data){
 
@@ -355,11 +493,13 @@ static void MODH_Read_Address_01H(void)
 
 				}	
 					
-				g_tModH.fAck01H = 1;
+				//g_tModH.fAck01H = 1;
 				
 			break;
 
 			case fun_mod_ptc:
+
+			 g_tModH.rx485_receive_fun_code = ptc_order;
 
 			   if(run_t.gPower_On == POWER_ON){
 			  
@@ -377,11 +517,13 @@ static void MODH_Read_Address_01H(void)
 				   break;
 
 				}	
-                g_tModH.fAck02H = 1;
+               // g_tModH.fAck02H = 1;
 			   }
 			break;
 
 			case fun_mod_plasma:
+
+			g_tModH.rx485_receive_fun_code = plasma_order;
 
 				 if(run_t.gPower_On == POWER_ON){
 			   
@@ -400,12 +542,14 @@ static void MODH_Read_Address_01H(void)
 				   break;
 
 				}	
-                g_tModH.fAck03H = 1;
+              //  g_tModH.fAck03H = 1;
 				}
 
 			break;
 
 			case fun_mod_ultrasonic:
+
+			  g_tModH.rx485_receive_fun_code = ultrasonic_order;
 
 			    if(run_t.gPower_On == POWER_ON){
 				
@@ -424,13 +568,14 @@ static void MODH_Read_Address_01H(void)
 				   break;
 
 				}	
-                g_tModH.fAck04H = 1;
+              //  g_tModH.fAck04H = 1;
 
 			   }
 
 			break;
 
 			case fun_mod_fan:
+				g_tModH.rx485_receive_fun_code = fan_order;
 
 			break;
 
@@ -441,23 +586,18 @@ static void MODH_Read_Address_01H(void)
 					 case fan_fault: //fan_fault
 
 					 	g_tModH.slave_machine_fan_warning = 1;
+					     SendWifiCmd_To_Order(SLAVE_FAN_WARNING);
 
 					 break;
 
 
 					 case ptc_fault: //ptc_fault 
                         g_tModH.slave_machine_ptc_warning = 1;
+						SendWifiCmd_To_Order(SLAVE_PTC_WARNING);
 
 					 break;
-
-
-
-
-
-					 }
-
-
-				 }
+					}
+				}
 
 			break;
 
@@ -466,11 +606,11 @@ static void MODH_Read_Address_01H(void)
 		
 	}
     }
-	if(run_t.broadcast_send_flag == 1){
+	if(g_tModH.broadcast_send_flag == 1){
 
 	    if(run_t.gTimer_rs485_times> TIMEOUT)
 		{
-		  run_t.broadcast_send_flag = 0;	
+		  g_tModH.broadcast_send_flag = 0;	
 					
 		}
 
@@ -478,6 +618,7 @@ static void MODH_Read_Address_01H(void)
 	}
    
 }
+#endif 
 /*
 *********************************************************************************************************
 *	函 数 名: MODH_ReadParam_01H
@@ -493,44 +634,46 @@ uint8_t MODH_WriteParam_Power_01H(uint8_t add,uint8_t _num,uint8_t _reg)
 	
 	for (i = 0; i < NUM; i++)
 	{
-		//MODH_Send01H (SlaveAddr_1, _reg, _num);		  /* 发送命令 */
+		/* 发送命令 */
 		MODH_Send00H_Power_OnOff(add,_num,_reg);
+		//g_tModH.rx485_send_fun_code = power_order;
 		run_t.gTimer_rs485_times=0;
-		run_t.broadcast_send_flag = 1;	
-		return 1;
-		#if 0
-		while (1)
+	
+
+		//time1 = bsp_GetRunTime();	/* ¼ÇÂ¼ÃüÁî·¢ËÍµÄÊ±¿Ì */
+		
+		while (1)				/* µÈ´ýÓ¦´ð,³¬Ê±»ò½ÓÊÕµ½Ó¦´ðÔòbreak  */
 		{
 			bsp_Idle();
 
-			//if(bsp_CheckRunTime(time1) > TIMEOUT)//if(run_t.gTimer_rs485_times> TIMEOUT)		//if (bsp_CheckRunTime(time1) > TIMEOUT)		
-			if(run_t.gTimer_rs485_times> TIMEOUT)
+			if (run_t.gTimer_rs485_times > TIMEOUT)		
 			{
-                run_t.broadcast_send_flag = 0;	
-				break;		/* 通信超时了 */
+				break;		/* Í¨ÐÅ³¬Ê±ÁË */
 			}
 			
-			if (run_t.broadcast_response_signal == SUCCESS_BROADCAST )
+			if (g_tModH.fAck01H > 0)
 			{
-				run_t.broadcast_response_signal++;
-				break;
+				break;		/* ½ÓÊÕµ½Ó¦´ð */
 			}
 		}
-		#endif 
+		
+		if (g_tModH.fAck01H > 0)
+		{
+			break;			/* Ñ­»·NUM´Î£¬Èç¹û½ÓÊÕµ½ÃüÁîÔòbreakÑ­»· */
+		}	
+		
 		
 	}
 
-//	if (run_t.broadcast_response_signal == 0)
-//	{
-//		run_t.broadcast_send_flag=0;
-//		return 0;
-//	}
-//	else 
-//	{
-//        run_t.broadcast_send_flag=0;
-//		return 1;	/* 02H 读成功 */
-//	}
-	
+	if (g_tModH.fAck01H == 0)
+	{
+		return 0;
+	}
+	else 
+	{
+		return 1;	/* 01H ¶Á³É¹¦ */
+	}
+
 }
 
 /*
@@ -550,15 +693,16 @@ uint8_t MODH_WriteParam_PTC_02H(uint8_t add,uint8_t _num,uint8_t _reg)
 	{
 		//MODH_Send02H (SlaveAddr_1, _reg, _num);
 		MODH_Send00H_Ptc_OnOff(add,_num,_reg);
-	    //time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-		//while (1)
+	   // g_tModH.rx485_send_fun_code = ptc_order;
+		run_t.gTimer_rs485_times=0;
+		
+		while (1)
 		{
-		//	bsp_Idle();
+			bsp_Idle();
 
-			//if(bsp_CheckRunTime(time1) > TIMEOUT)//if(run_t.gTimer_rs485_times> TIMEOUT)		//if (bsp_CheckRunTime(time1) > TIMEOUT)		
-			if(run_t.gTimer_rs485_times> TIMEOUT)
+			if (run_t.gTimer_rs485_times > TIMEOUT)		
 			{
-				break;		/* 通信超时了 */
+				break;		/* Í¨ÐÅ³¬Ê±ÁË */
 			}
 			
 			if (g_tModH.fAck02H > 0)
@@ -571,6 +715,7 @@ uint8_t MODH_WriteParam_PTC_02H(uint8_t add,uint8_t _num,uint8_t _reg)
 		{
 			break;
 		}
+		
 	}
 	
 	if (g_tModH.fAck02H == 0)
@@ -600,38 +745,42 @@ uint8_t MODH_WriteParam_Plasma_03H(uint8_t add,uint8_t len,uint8_t _reg)
 	{
 		//MODH_Send03H (SlaveAddr_1, _reg, _num);
 		MODH_Send00H_Plasma_OnOff(add,len,_reg);
-		//time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-		//	run_t.gTimer_rs485_times=0;
-		//while (1)
-//		{
-//		//	bsp_Idle();
-//
-//			//if (bsp_CheckRunTime(time1) > TIMEOUT)//
-//			if(run_t.gTimer_rs485_times> TIMEOUT)		
-//			{
-//				break;		/* 通信超时了 */
-//			}
-//			
-//			if (g_tModH.fAck03H > 0)
-//			{
-//				break;
-//			}
-//		}
-//		
-//		if (g_tModH.fAck03H > 0)
-//		{
-//			break;
-//		}
+		// g_tModH.rx485_send_fun_code = plasma_order;
+		 run_t.gTimer_rs485_times=0;
+	
+
+		while (1)
+		{
+			bsp_Idle();
+
+			if (run_t.gTimer_rs485_times > TIMEOUT)		
+			{
+				break;		/* Í¨ÐÅ³¬Ê±ÁË */
+			}
+			
+			if (g_tModH.fAck03H > 0)
+			{
+				break;
+			}
+		}
+		
+		if (g_tModH.fAck03H > 0)
+		{
+			break;
+		}
+		
 	}
 	
 	if (g_tModH.fAck03H == 0)
 	{
-		return 0;	/* 通信超时了 */
+		return 0;
 	}
 	else 
 	{
-		return 1;	/* 写入03H参数成功 */
+		return 1;	/* 02H 读成功 */
 	}
+		 
+
 }
 
 
@@ -650,40 +799,150 @@ uint8_t MODH_WriteParam_Ultrasonic_04H(uint8_t add,uint8_t _num,uint8_t _reg)
 	
 	for (i = 0; i < NUM; i++)
 	{
-		//MODH_Send04H (SlaveAddr_1, _reg, _num);
+		
 		MODH_Send00H_Ultrasonic_OnOff(add,_num,_reg);
-		//time1 = bsp_GetRunTime();	/* 记录命令发送的时刻 */
-		//	run_t.gTimer_rs485_times=0;
-		//while (1)
-//		{
-//		//	bsp_Idle();
-//
-//			//if(bsp_CheckRunTime(time1) > TIMEOUT)//
-//			if(run_t.gTimer_rs485_times> TIMEOUT)		//if (bsp_CheckRunTime(time1) > TIMEOUT)		
-//			{
-//				break;		/* 通信超时了 */
-//			}
-//			
-//			if (g_tModH.fAck04H > 0)
-//			{
-//				break;
-//			}
-//		}
-//		
-//		if (g_tModH.fAck04H > 0)
-//		{
-//			break;
-//		}
+        // g_tModH.rx485_send_fun_code = ultrasonic_order;
+		  run_t.gTimer_rs485_times=0;
+	
+		while (1)
+		{
+			bsp_Idle();
+
+			if (run_t.gTimer_rs485_times > TIMEOUT)		
+			{
+				break;		/* Í¨ÐÅ³¬Ê±ÁË */
+			}
+			
+			if (g_tModH.fAck04H > 0)
+			{
+				break;
+			}
+		}
+		
+		if (g_tModH.fAck04H > 0)
+		{
+			break;
+		}
+		
 	}
 	
 	if (g_tModH.fAck04H == 0)
 	{
-		return 0;	/* 通信超时了 */
+		return 0;
 	}
 	else 
 	{
-		return 1;	/* 04H 读成功 */
+		return 1;	/* 02H 读成功 */
 	}
+	
+	
+}
+/*
+*********************************************************************************************************
+*	函 数 名: MODH_ReadParam_05H
+*	功能说明: 单个参数. 通过发送05H指令实现，发送之后，等待从机应答。
+*	形    参: 无
+*	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
+*********************************************************************************************************
+*/
+uint8_t MODH_WriteParam_Fan_05H(uint8_t add,uint8_t _num,uint8_t _reg)
+{
+	
+	uint8_t i;
+	
+	for (i = 0; i < NUM; i++)
+	{
+		//MODH_Send04H (SlaveAddr_1, _reg, _num);
+		MODH_Send00H_Fan_OnOff(add,_num,_reg);
+     
+		run_t.gTimer_rs485_times=0;
+		
+		while (1)
+		{
+			bsp_Idle();
+
+			if (run_t.gTimer_rs485_times > TIMEOUT)		
+			{
+				break;		/* Í¨ÐÅ³¬Ê±ÁË */
+			}
+			
+			if (g_tModH.fAck05H > 0)
+			{
+				break;
+			}
+		}
+		
+		if (g_tModH.fAck05H > 0)
+		{
+			break;
+		}
+		
+	}
+	
+	if (g_tModH.fAck05H == 0)
+	{
+		return 0;
+	}
+	else 
+	{
+		return 1;	/* 02H 读成功 */
+	}
+	
+
+}
+/*
+*********************************************************************************************************
+*	函 数 名: MODH_ReadParam_B0H
+*	功能说明: 单个参数. 通过发送05H指令实现，发送之后，等待从机应答。
+*	形    参: 无
+*	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
+*********************************************************************************************************
+*/
+uint8_t MODH_WriteParam_SetTempValue_B0H(uint8_t add,uint8_t _len,uint8_t _data)
+{
+	
+	uint8_t i;
+	
+	for (i = 0; i < NUM; i++)
+	{
+		//MODH_Send04H (SlaveAddr_1, _reg, _num);
+		MODH_SendB0H_SetTemperature_Value(add,_len,_data);
+  
+		run_t.gTimer_rs485_times=0;
+		
+	
+		while (1)
+		{
+			bsp_Idle();
+
+			if (run_t.gTimer_rs485_times > TIMEOUT)		
+			{
+				break;		/* Í¨ÐÅ³¬Ê±ÁË */
+			}
+			
+			if (g_tModH.fAckb0H > 0)
+			{
+				break;
+			}
+		}
+		
+		if (g_tModH.fAckb0H > 0)
+		{
+			break;
+		}
+		
+	}
+	
+	if (g_tModH.fAckb0H == 0)
+	{
+		return 0;
+	}
+	else 
+	{
+		return 1;	/* b0H 读成功 */
+	}
+	
+
 }
 
 /********************************************************************************
@@ -721,8 +980,9 @@ void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t d
 void RS485_Host_Send_Communication_Handler(void)
 {
 
-    static uint8_t rs485_run_flag,dry_flag=0xff,plasma_flag=0xff; 
+    static uint8_t rs485_run_flag,dry_flag=0xff,plasma_flag=0xff,temp_init= 0xff; 
 	static uint8_t  dry_off_flag=0xff,plasma_off_flag =0xff,ultrsonic_off_flag=0xff;
+	static uint8_t  send_data;
 	 switch(run_t.rs485_Command_tag){
 
 
@@ -750,8 +1010,10 @@ void RS485_Host_Send_Communication_Handler(void)
      
     if(rs485_run_flag ==1){
 
-	  // bsp_Idle();
-   
+	   switch(send_data){
+
+	   case 0:
+       
 	   if(run_t.gDry ==1 && (dry_flag !=run_t.rs485_send_dry)){
 
 	       dry_flag = run_t.rs485_send_dry;
@@ -760,14 +1022,16 @@ void RS485_Host_Send_Communication_Handler(void)
 		   
 
 		}
-		else if(run_t.gDry ==0 && (dry_off_flag !=run_t.rs485_send_dry)){
+	    else if(run_t.gDry ==0 && (dry_off_flag !=run_t.rs485_send_dry)){
 			dry_off_flag =run_t.rs485_send_dry;
 		   MODH_WriteParam_PTC_02H(0x00,0x01,0x0);
 		
 
 		}
+        send_data =1;
+       break;
 
-
+	   case 1:
 		if(run_t.gPlasma ==1 && (plasma_flag !=run_t.rs485_send_plasma)){
 			  plasma_flag = run_t.rs485_send_plasma;
           
@@ -783,6 +1047,11 @@ void RS485_Host_Send_Communication_Handler(void)
 
 
 		}
+		send_data = 2;
+		break;
+
+
+		case 2:
 
         if(run_t.ultrasonic ==0 && (ultrsonic_off_flag !=run_t.rs485_send_ultrasonic)){
 
@@ -798,17 +1067,215 @@ void RS485_Host_Send_Communication_Handler(void)
 
 
 		}
+		send_data = 0;
+
+		break;
+
+		case 3:
+		  if( run_t.set_temperature_value > 19 &&  run_t.set_temperature_value< 41){
+
+		   if(temp_init != run_t.rs485_send_temperature_value){
+		   	
+			 temp_init = run_t.rs485_send_temperature_value;
+
+		      MODH_WriteParam_SetTempValue_B0H(0x00,0x01,run_t.set_temperature_value);
+
+		  }
+		
+
+	   	}
+		 send_data = 0;
+
+		break;
+
+	#if 0
+	   if(run_t.gFan_level ==fan_speed_max && (ultrsonic_off_flag !=run_t.rs485_send_ultrasonic)){
+
+		  ultrsonic_off_flag = run_t.rs485_send_ultrasonic;
+
+		  MODH_WriteParam_Fan_05H(0x00,0x01,0x00);
+
+		}
+		else if(run_t.gFan_level ==fan_speed_min && (ultrsonic_off_flag !=run_t.rs485_send_ultrasonic)){
+		   ultrsonic_off_flag = run_t.rs485_send_ultrasonic;
+
+		   MODH_WriteParam_Fan_05H(0x00,0x01,0x01);
+
+
+		}
+		#endif 
 
    }
 
-   if(run_t.broadcast_response_signal != SUCCESS_BROADCAST){
-       run_t.broadcast_response_signal ++;
-		run_t.rs485_send_ultrasonic++;
-         run_t.rs485_send_plasma ++;
-		 run_t.rs485_send_dry++;
-
    }
+
+  
 
 }
 
+/*****************************************************************************
+	*
+	*Function Name: static vid Rx485_Receive_Slave_Id(void)
+	*Function:
+	*Input Ref: 
+	*Return Ref:
+	*
+******************************************************************************/
+static void Rx485_Receive_Slave_Id(uint8_t id)
+{
+
+       static uint8_t slave_id_one,slave_id_two,slave_id_three,slave_id_four;
+
+	   if(g_tModH.slave_Id[0]==0){
+
+		   if(slave_id_one ==0){
+		     
+			 if(id != g_tModH.slave_Id[0] && id != g_tModH.slave_Id[1] && id != g_tModH.slave_Id[2] && id != g_tModH.slave_Id[3]){
+		     g_tModH.slave_Id[0]= id;
+			 g_tModH.distinguish_slave_id = 1;
+			  slave_id_one++;
+             return ;
+
+			 }
+
+		   }
+		  }
+		  else{
+	       if(id == g_tModH.slave_Id[0]){ // && g_tModH.slave_Id[0]!= g_tModH.slave_Id[2] && g_tModH.slave_Id[0]!= g_tModH.slave_Id[3]){
+	         g_tModH.distinguish_slave_id = 1;
+			return ;
+
+	       }
+
+		  }
+	
+
+		
+	     if(g_tModH.slave_Id[1]==0){
+
+		   if(slave_id_two ==0){
+		   
+			 if(id != g_tModH.slave_Id[0] && id != g_tModH.slave_Id[1] && id != g_tModH.slave_Id[2] && id != g_tModH.slave_Id[3]){
+			  g_tModH.slave_Id[1]= id;
+			  g_tModH.distinguish_slave_id = 2;
+			   slave_id_two++;
+
+			 return ;
+
+			}
+
+		   }
+	     }
+		 else{
+
+		   if(id == g_tModH.slave_Id[1]){// && g_tModH.slave_Id[1]!= g_tModH.slave_Id[2] && g_tModH.slave_Id[1]!= g_tModH.slave_Id[3]){
+	           g_tModH.distinguish_slave_id = 2;
+			  return ;
+
+		   	}
+
+		  }
+
+		
+		if(g_tModH.slave_Id[2]==0){
+			if(slave_id_three ==0){
+			 
+
+			 if(id != g_tModH.slave_Id[0] && id != g_tModH.slave_Id[1] && id != g_tModH.slave_Id[2] && id != g_tModH.slave_Id[3]){
+
+			      g_tModH.slave_Id[2]= id;
+				   g_tModH.distinguish_slave_id = 3;
+				   slave_id_three++;
+				  return;
+
+             }
+           }
+		    
+	    }
+		else{
+
+		    if(id == g_tModH.slave_Id[2]){ //!= g_tModH.slave_Id[0] && g_tModH.slave_Id[2]!= g_tModH.slave_Id[1] && g_tModH.slave_Id[2]!= g_tModH.slave_Id[3])
+			   g_tModH.distinguish_slave_id = 3;
+				return ;
+
+		    }
+
+
+		}
+
+
+		
+		if(g_tModH.slave_Id[3]==0){
+
+			if(slave_id_four ==0){
+
+	         if(id != g_tModH.slave_Id[0] && id != g_tModH.slave_Id[1] && id != g_tModH.slave_Id[2] && id != g_tModH.slave_Id[3]){
+		         g_tModH.slave_Id[3]= id;
+				 g_tModH.distinguish_slave_id = 4;
+				 slave_id_four++;
+
+			   }
+		     }
+		}
+		else{
+
+              if(id == g_tModH.slave_Id[3]){
+			   g_tModH.distinguish_slave_id = 4;
+
+                return ;
+
+			  }
+
+
+		}
+	       
+
+}
+
+/*****************************************************************************
+	*
+	*Function Name: void Select_Sort(int *pt,int n)
+	*Function:
+	*Input Ref: *pt ->input array ,  n-->array of length
+	*
+	*
+******************************************************************************/
+static uint8_t findMaxPos(uint8_t *ptarr,uint8_t n)
+{
+     uint8_t i,max;
+	 uint8_t pos;
+	 max = ptarr[0];
+	 pos = 0;
+
+	 for(i=0; i<n;i++){
+
+        if(ptarr[i] > max){
+           max = ptarr[i];
+		   pos = i;
+
+		}
+
+
+	 }
+
+	return pos;
+
+}
+
+
+static void Selection_Sort(uint8_t *ptarr,uint8_t len)
+{
+   uint8_t  pos,temp;
+  // len = sizeof(ptarr)/sizeof(ptarr[0]);
+
+   while(len > 1){
+
+       pos = findMaxPos(ptarr,len);
+	   temp = ptarr[pos];
+       ptarr[pos] = ptarr[len-1];
+	   ptarr[len-1] = temp;
+	   len--;
+   }
+  
+}
 

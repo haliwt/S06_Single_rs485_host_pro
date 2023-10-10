@@ -61,7 +61,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			break;
             
         case 2:
-			 if(inputBuf[0] == 'P' || inputBuf[0] == 'C' ||inputBuf[0] == 'Z'){
+			 if(inputBuf[0] == 'P' || inputBuf[0] == 'C' ||inputBuf[0] == 'Z' \
+				 ||inputBuf[0] == 'M'  ){
 			    inputCmd[0]= inputBuf[0];
 				 state =3;
 

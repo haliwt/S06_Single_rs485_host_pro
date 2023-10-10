@@ -99,6 +99,18 @@ typedef enum
 } BroadcastStatus;
 
 
+typedef enum{
+
+   power_order =0x01,
+   ptc_order,
+   plasma_order,
+   ultrasonic_order,
+   fan_order,
+   rs485_no_order =0xff
+   
+ }rx485_send_fun_code;
+
+
 typedef enum _mod_fun mod_fun_codes;
 
 
@@ -115,16 +127,19 @@ typedef struct
 
 	uint8_t TxBuf[H_TX_BUF_SIZE];
 	uint8_t TxCount;
-	
-	uint8_t fun_mod_power;//Reg01H;		/* 保存主机发送的寄存器首地址 */
-	uint8_t fun_mod_ptc;//Reg02H;
-	uint8_t fun_mod_plasma;//Reg03H;		
-	uint8_t fun_mod_fan;//Reg04H;
+
+
+	uint8_t rx485_receive_fun_code;
+
+
 
 	uint8_t RegNum;			/* 寄存器个数 */
 
 	uint8_t slave_machine_fan_warning;
 	uint8_t slave_machine_ptc_warning;
+
+	uint8_t slave_Id[4];
+	uint8_t distinguish_slave_id;
 
 	uint8_t fAck01H;		/* 应答命令标志 0 表示执行失败 1表示执行成功 */
 	uint8_t fAck02H;
@@ -132,7 +147,7 @@ typedef struct
 	uint8_t fAck04H;
 	uint8_t fAck05H;		
 	uint8_t fAck06H;		
-	uint8_t fAck10H;
+	uint8_t fAckb0H;
 	
 }MODH_T;
 
@@ -163,13 +178,19 @@ typedef struct
 
 
 void MODH_Poll(void);
-uint8_t MODH_WriteParam_Power_01H(uint8_t addr,uint8_t _len,uint8_t _reg);
+uint8_t  MODH_WriteParam_Power_01H(uint8_t addr,uint8_t _len,uint8_t _reg);
 uint8_t MODH_WriteParam_PTC_02H(uint8_t addr,uint8_t _len,uint8_t _reg);
 uint8_t MODH_WriteParam_Plasma_03H(uint8_t addr,uint8_t _len,uint8_t _reg);
 uint8_t MODH_WriteParam_Ultrasonic_04H(uint8_t addr,uint8_t _len,uint8_t _reg);
-uint8_t MODH_WriteParam_05H(uint16_t _reg, uint16_t _value);
-uint8_t MODH_WriteParam_06H(uint16_t _reg, uint16_t _value);
-uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t *_buf);
+uint8_t MODH_WriteParam_Fan_05H(uint8_t add,uint8_t _num,uint8_t _reg);
+uint8_t MODH_WriteParam_SetTempValue_B0H(uint8_t add,uint8_t _num,uint8_t _reg);
+
+
+
+//uint8_t MODH_WriteParam_05H(uint16_t _reg, uint16_t _value);
+//uint8_t MODH_WriteParam_06H(uint16_t _reg, uint16_t _value);
+//uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t *_buf);
+
 void RS485_Host_Send_Communication_Handler(void);
 void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t data);
 
