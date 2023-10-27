@@ -129,6 +129,8 @@ static void Single_Power_ReceiveCmd(uint8_t cmd)
     switch(cmd){
 
     case 0x00: //power off
+     //  sendData_Real_TimeHum(uint8_t hum, uint8_t temp)
+       SendData_AnswerSignal(0x50);
        set_power_on_buzzer++;
          if(first_power_off_buzzer != set_power_off_buzzer){
 		   first_power_off_buzzer=set_power_off_buzzer;
@@ -147,6 +149,7 @@ static void Single_Power_ReceiveCmd(uint8_t cmd)
 
     case 0x01: // power on
        set_power_off_buzzer ++ ;
+	   SendData_AnswerSignal(0x51);
         if(first_power_on_buzzer != set_power_on_buzzer){
 		   first_power_on_buzzer=set_power_on_buzzer;
            Buzzer_KeySound();

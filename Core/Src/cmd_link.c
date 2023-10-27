@@ -106,7 +106,6 @@ void Display_Decode_Function(void)
    if(run_t.decodeFlag==1){
    
       run_t.decodeFlag =0;
-	  run_t.process_run_guarantee_flag =1;
       Decode_RunCmd();
    
       
@@ -331,23 +330,20 @@ void SendData_Real_GMT(uint8_t hdata,uint8_t mdata,uint8_t sdata)
 #endif 
 /********************************************************************************
 	**
-	*Function Name:void Answering_Signal_USART1_Handler(void)
+	*Function Name:void Send_AnswerSignal(uint8_t data)
 	*Function :UART1 acknowleg 
 	*Input Ref: cmddata =0,command ,cmddata =1,data
+	*            0x50 is power on ,0x51 is power off 
 	*Return Ref:NO
 	*
 *******************************************************************************/
-void Answering_Signal_USART1_Handler(uint8_t cmdordata,uint8_t data)
+void SendData_AnswerSignal(uint8_t data)
 {
-    outputBuf[0]=0x55; //head :0x55
-	outputBuf[1]=cmdordata; //ID:command or data
-	outputBuf[2]=0; //Type: 0 ->uint8_t 
-	outputBuf[3]=0x01; //length: 1 	
-	outputBuf[4]=data; //
-	outputBuf[5] = outputBuf[0]+outputBuf[1]+outputBuf[2]+outputBuf[3]+outputBuf[4];
-	//for(i=3;i<6;i++) crc ^= outputBuf[i];
-	//outputBuf[i]=crc;
-	transferSize=6;
+    outputBuf[0]='M'; //4D
+	outputBuf[1]='A'; //41
+	outputBuf[2]='A'; //44	// 'A' ->control 
+	outputBuf[3]=data; //
+	transferSize=4;
 	if(transferSize)
 	{
 		while(transOngoingFlag); //UART interrupt transmit flag ,disable one more send data.

@@ -53,7 +53,8 @@ void Eesp8266_TxData_ToSmartPhone(void);
 void USART1_Cmd_Error_Handler(UART_HandleTypeDef *huart);
 void USART2_Cmd_Error_Handler(UART_HandleTypeDef *huart);
 
-void Answering_Signal_USART1_Handler(uint8_t cmdordata,uint8_t data);
+void SendData_AnswerSignal(uint8_t data);
+
 
 
 
