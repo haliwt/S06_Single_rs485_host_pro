@@ -65,7 +65,7 @@ void SystemClock_Config(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-   static uint8_t power_on_the_first;
+   
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -117,17 +117,8 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
   
-	if(power_on_the_first==0){
-    
-        power_on_the_first++;
-        Buzzer_KeySound();
-	    run_t.gTimer_rs485_times =0;
-		g_tModH.slave_Id[0] =0;
-		g_tModH.slave_Id[1] =0;
-		g_tModH.slave_Id[2] =0;
-		g_tModH.slave_Id[3] =0;
-    
-    }
+
+	bsp_Init();
 	Display_Decode_Function();
     if(run_t.decodeFlag ==0){
 

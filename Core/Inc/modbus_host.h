@@ -60,6 +60,9 @@
 	#define UART3_RX_BUF_SIZE	1*1024
 #endif
 
+extern uint8_t rs485_rx_local[7];
+
+
 typedef enum {
 
   fun_mod_power =0x01,
@@ -128,8 +131,6 @@ typedef struct
 	uint8_t TxBuf[H_TX_BUF_SIZE];
 	uint8_t TxCount;
 
-
-	uint8_t rx485_receive_fun_code;
 
 
 

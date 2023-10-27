@@ -17,7 +17,7 @@
 *	                                   变量
 *********************************************************************************************************
 */
-#define TIMEOUT		0		/* 接收命令超时时间, 单位ms */
+#define TIMEOUT		1		/* 接收命令超时时间, 单位ms */
 #define NUM			1			/* 循环发送次数 */
 
 /*
@@ -51,6 +51,7 @@ MODH_T g_tModH = {0};
 
 VAR_T g_tVar;
 uint8_t crc16_check_flag;
+uint8_t rs485_rx_local[7];
 
 static void Rx485_Receive_Slave_Id(uint8_t id);
 
@@ -302,14 +303,15 @@ void MODH_Poll(void)
 		else{
         	crc16_check_flag = 1;
 			g_tModH.Rx_rs485_data_flag=0;
-		    g_tModH.RxCount =0;
-		    
-
+		   // memcpy(rs485_rx_local,g_tModH.RxBuf,7);
+			g_tModH.RxCount = 0;	/* 必须清零计数器，方便下次帧同步 */
+		
 		}
     }
 	if(crc16_check_flag==1){
 		/* 分析应用层协议 */
 		MODH_AnalyzeApp();
+		
 		crc16_check_flag=0;
 	 
 	
@@ -343,21 +345,13 @@ static void MODH_Read_Address_Info(void)
 {
    uint8_t bytes_zero,byte_load_addr,byte_fun_code,byte_len,byte_data;
    static uint8_t sort_times;
-	if(run_t.gPower_On == POWER_ON){
-	  
-	   bytes_zero =    g_tModH.RxBuf[0];    /* 主机  地址   0x01 */
-	   byte_load_addr =g_tModH.RxBuf[1]; 	/* 从机地址，0x*/
-	   byte_fun_code = g_tModH.RxBuf[2];  	/* 功能码 */
-	   byte_len = 	   g_tModH.RxBuf[3];    /* 数据长度 */
-	   byte_data =	   g_tModH.RxBuf[4];    /* 数据    */
-	}
-	 if(g_tModH.RxBuf[0]==0){
+	
 
-	    
-		 g_tModH.rx485_receive_fun_code = byte_fun_code;
+	 if(rs485_rx_local[0]==0){
+
 		
 
-	switch(g_tModH.RxBuf[2]){
+	switch(rs485_rx_local[2]){
 
 	  case 0x01:
 	  	
@@ -393,7 +387,7 @@ static void MODH_Read_Address_Info(void)
      }
 
    }
-   else if(g_tModH.RxBuf[0]==MasterAddr){
+   else if(rs485_rx_local[0]==MasterAddr){
 		Answerback_RS485_Signal(byte_load_addr,byte_fun_code,byte_len,byte_data);
 		Rx485_Receive_Slave_Id(byte_load_addr);
         if(g_tModH.slave_Id[3] != 0 && sort_times < 2){
@@ -402,28 +396,28 @@ static void MODH_Read_Address_Info(void)
 		}
 
 
-	 switch(g_tModH.RxBuf[2]){
+	 switch(rs485_rx_local[2]){
 		case fun_fault_code:
 			switch(byte_data){
 
-					 case fan_fault: //fan_fault
+			 case fan_fault: //fan_fault
 
-					 	g_tModH.slave_machine_fan_warning = 1;
-					    SendWifiCmd_To_Order(SLAVE_FAN_WARNING);
+			 	g_tModH.slave_machine_fan_warning = 1;
+			    SendWifiCmd_To_Order(SLAVE_FAN_WARNING);
 
-					 break;
+			 break;
 
 
-					 case ptc_fault: //ptc_fault 
-                        g_tModH.slave_machine_ptc_warning = 1;
-						SendWifiCmd_To_Order(SLAVE_PTC_WARNING);
+			 case ptc_fault: //ptc_fault 
+                g_tModH.slave_machine_ptc_warning = 1;
+				SendWifiCmd_To_Order(SLAVE_PTC_WARNING);
 
-					 break;
-					}
+			 break;
+			}
 				
 
-			break;
-			}
+		break;
+	   }
 
 
    }
@@ -627,7 +621,7 @@ static void MODH_Read_Address_01H(void)
 *	返 回 值: 1 表示成功。0 表示失败（通信超时或被拒绝）
 *********************************************************************************************************
 */
-uint8_t MODH_WriteParam_Power_01H(uint8_t add,uint8_t _num,uint8_t _reg)
+uint8_t MODH_WriteParam_Power_01H(uint8_t add,uint8_t _len,uint8_t _reg)
 {
 	//int32_t time1,time2;
 	uint8_t i;
@@ -635,7 +629,7 @@ uint8_t MODH_WriteParam_Power_01H(uint8_t add,uint8_t _num,uint8_t _reg)
 	for (i = 0; i < NUM; i++)
 	{
 		/* 发送命令 */
-		MODH_Send00H_Power_OnOff(add,_num,_reg);
+		MODH_Send00H_Power_OnOff(add,_len,_reg);
 		//g_tModH.rx485_send_fun_code = power_order;
 		run_t.gTimer_rs485_times=0;
 	
@@ -648,7 +642,7 @@ uint8_t MODH_WriteParam_Power_01H(uint8_t add,uint8_t _num,uint8_t _reg)
 
 			if (run_t.gTimer_rs485_times > TIMEOUT)		
 			{
-				break;		/* Í¨ÐÅ³¬Ê±ÁË */
+				break;		/* timer timing is over 1s */
 			}
 			
 			if (g_tModH.fAck01H > 0)
@@ -1071,22 +1065,7 @@ void RS485_Host_Send_Communication_Handler(void)
 
 		break;
 
-		case 3:
-		  if( run_t.set_temperature_value > 19 &&  run_t.set_temperature_value< 41){
-
-		   if(temp_init != run_t.rs485_send_temperature_value){
-		   	
-			 temp_init = run_t.rs485_send_temperature_value;
-
-		      MODH_WriteParam_SetTempValue_B0H(0x00,0x01,run_t.set_temperature_value);
-
-		  }
 		
-
-	   	}
-		 send_data = 0;
-
-		break;
 
 	#if 0
 	   if(run_t.gFan_level ==fan_speed_max && (ultrsonic_off_flag !=run_t.rs485_send_ultrasonic)){
