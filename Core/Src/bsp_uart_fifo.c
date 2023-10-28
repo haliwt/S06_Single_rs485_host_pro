@@ -535,9 +535,9 @@ static void UartIRQ(UART_T *_pUart)
 		g_tModH.RxCount++;
 		/* 回调函数,通知应用程序收到新数据,一般是发送1个消息或者设置一个标记 */
 		//if (_pUart->usRxWrite == _pUart->usRxRead)
-		if(g_tModH.RxCount == 8 )
+		if(g_tModH.RxCount == 10 )
 		{
-            memcpy(rs485_rx_local,g_tModH.RxBuf,7);
+            memcpy(rs485_rx_local,g_tModH.RxBuf,9);
 			g_tModH.Rx_rs485_data_flag = 1;
 			success_flag ++;
 			g_tModH.RxCount =0;

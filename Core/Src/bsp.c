@@ -8,7 +8,7 @@ void bsp_Init(void)
     
         power_on_the_first++;
         Buzzer_KeySound();
-	    run_t.gTimer_rs485_times =0;
+
 		g_tModH.slave_Id[0] =0;
 		g_tModH.slave_Id[1] =0;
 		g_tModH.slave_Id[2] =0;

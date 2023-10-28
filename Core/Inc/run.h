@@ -57,6 +57,11 @@ typedef enum{
      FAN_LEVEL_MAX = 0x11,
      FAN_LEVEL_MAX_NO_SOUND=0x12,
      FAN_STOP = 0x13,
+
+	 DRIVE_RAT_ON = 0x50,
+	 DRIVE_RAT_OFF = 0x51,
+
+	 RS485_TEMP = 0x60,
      
 
      AI_MODE_ON = 0x30,   //EDIT 2023.09.13 new Add
@@ -142,7 +147,7 @@ typedef struct _RUN_T{
 	//adc 
 	uint8_t ADC_channel_No;
 	//rs485
-	uint8_t rs485_Command_tag;
+
     uint8_t  rs485_send_times;
 
       uint8_t  gPlasma;
@@ -169,11 +174,6 @@ typedef struct _RUN_T{
     uint8_t iwdg_feed_success_flag;
 
 	//rs485
-	 uint8_t rs485_send_plasma;
-	 uint8_t  rs485_send_dry;
-	 uint8_t rs485_send_ultrasonic;
-	 uint8_t rs485_send_temperature_value;
-	 
 	 uint8_t gTimer_dogfood_times;
 
 	
@@ -190,7 +190,7 @@ typedef struct _RUN_T{
 	  uint8_t app_appointment_time_power_on;
 	  uint8_t theFirst_input_power_flag;
 
-	  uint8_t gTimer_rs485_times;
+	
 	 
 	  
 	  

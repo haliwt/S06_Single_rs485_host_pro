@@ -65,8 +65,9 @@ void Decode_RunCmd(void)
 	  	if(run_t.gPower_On==POWER_ON){
               
              run_t.set_temperature_value = cmdType_2;
-			 run_t.rs485_send_temperature_value++;
-		     MODH_WriteParam_SetTempValue_B0H(0x00,0x01,run_t.set_temperature_value);
+			 g_tModH.rs485_set_temperature_value = cmdType_2;
+			 g_tModH.rs485_Command_tag = RS485_TEMP;
+
 			 
 		     #if DEBUG
 
@@ -141,8 +142,8 @@ static void Single_Power_ReceiveCmd(uint8_t cmd)
 		run_t.buzzer_sound_flag=0;
 		//Answering_Signal_USART1_Handler(COMMAND_ID,ANSWER_POWER_OFF);
 	   run_t.RunCommand_Label= POWER_OFF;
-       run_t.rs485_Command_tag =  POWER_OFF;
-       run_t.gTimer_rs485_times=0;
+       g_tModH.rs485_Command_tag =  POWER_OFF;
+       g_tModH.gTimer_rs485_rx_times=0;
 
     cmd = 0xff;
     break;
@@ -156,11 +157,9 @@ static void Single_Power_ReceiveCmd(uint8_t cmd)
         }
 		run_t.buzzer_sound_flag=0;
         
-		 // printf("pon\n");
-        //Answering_Signal_USART1_Handler(COMMAND_ID,ANSWER_POWER_ON);
 		run_t.RunCommand_Label= POWER_ON;
-		run_t.rs485_Command_tag =  POWER_ON;
-		 run_t.gTimer_rs485_times=0;
+		g_tModH.rs485_Command_tag =  POWER_ON;
+		 g_tModH.gTimer_rs485_rx_times=0;
 		
 
 		 
@@ -187,7 +186,7 @@ static void Single_Power_ReceiveCmd(uint8_t cmd)
 static void Single_Command_ReceiveCmd(uint8_t cmd)
 {
 
-    
+   
 	switch(cmd){
 
 	    case DRY_ON_NO_BUZZER:
@@ -198,11 +197,15 @@ static void Single_Command_ReceiveCmd(uint8_t cmd)
          run_t.gDry = 1;
 
     
-		 if(no_buzzer_sound_dry_off==0){
+		 if(no_buzzer_sound_dry_off==0){ //key_order
 		  	    Buzzer_KeySound();
+			
+				g_tModH.rs485_Command_tag =  DRY_ON;
 		  }
-		  else no_buzzer_sound_dry_off=0;
-		  run_t.rs485_send_dry++;
+		  else{
+			no_buzzer_sound_dry_off=0;
+		  }
+		 
 		
 		
        break;
@@ -216,10 +219,11 @@ static void Single_Command_ReceiveCmd(uint8_t cmd)
 			
 			if(no_buzzer_sound_dry_off==0){
 				Buzzer_KeySound();
+				g_tModH.rs485_Command_tag =  DRY_OFF;
             }
-			else no_buzzer_sound_dry_off=0;
-		
-			 run_t.rs485_send_dry++;
+			else{
+				 no_buzzer_sound_dry_off=0;
+			}
 		
 			   
        break;
@@ -227,48 +231,45 @@ static void Single_Command_ReceiveCmd(uint8_t cmd)
        case PLASMA_ON:
        		run_t.gPlasma=1;
 		    Buzzer_KeySound();
-	         run_t.rs485_send_plasma++;
+	        g_tModH.rs485_Command_tag =  PLASMA_ON;
 	    
        break;
 
        case PLASM_ON_NO_BUZZER:
      
            run_t.gPlasma=1;
-		    run_t.rs485_send_plasma++;
-           
-
-       break;
+		break;
 
        case PLASM_OFF_NO_BUZZER:
           
            run_t.gPlasma=0;
            run_t.rs485_send_times++;
-		   run_t.gTimer_rs485_times=0;
-		   run_t.rs485_send_plasma++;
+		   g_tModH.gTimer_rs485_rx_times=0;
+		  
        break;
 
-       
-
-       case PLASMA_OFF:
+		case PLASMA_OFF:
            run_t.gPlasma=0;
 		   Buzzer_KeySound();
-	
-	       run_t.rs485_send_plasma++;
+			g_tModH.rs485_Command_tag =  PLASMA_OFF;
        break;
+
 
        case  FAN_LEVEL_MIN: //this is fan_speed_min, run_t.gFan_level = fan_speed_min;
 	     
            run_t.gFan_level = fan_speed_min;
-		   run_t.rs485_send_ultrasonic ++;
+		
 	       run_t.ultrasonic = 0;
 		   Buzzer_KeySound();
+		   g_tModH.rs485_Command_tag= DRIVE_RAT_OFF;
       break;
 
       case FAN_LEVEL_MAX:
          run_t.gFan_level=fan_speed_max;
-		 run_t.rs485_send_ultrasonic ++;
+	
 	     run_t.ultrasonic = 1;
          Buzzer_KeySound();
+		 g_tModH.rs485_Command_tag= DRIVE_RAT_ON;
 
       break;
 

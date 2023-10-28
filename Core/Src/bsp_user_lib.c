@@ -251,6 +251,12 @@ uint16_t BEBufToUint16(uint8_t *_pBuf)
     return (((uint16_t)_pBuf[0] << 8) | _pBuf[1]);
 }
 
+uint16_t BEBufToUint16_SlaveAddress(uint8_t *_pBuf)
+{
+    return (((uint16_t)_pBuf[2] << 8) | _pBuf[3]);
+}
+
+
 /*
 *********************************************************************************************************
 *	函 数 名: LEBufToUint16

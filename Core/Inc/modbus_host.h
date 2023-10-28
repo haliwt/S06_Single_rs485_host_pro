@@ -2,7 +2,7 @@
 #define __MODBUS_HOST_H_
 #include "main.h"
 
-
+#define HEAD_FLAG       0xAA
 #define MasterAddr		0x01		/* 主机地址 */
 #define SlaveAddr_1		0x02		/* 1号分机,address */
 #define SlaveAddr_2		0x03		/* 2号分机 ,address*/
@@ -60,7 +60,9 @@
 	#define UART3_RX_BUF_SIZE	1*1024
 #endif
 
-extern uint8_t rs485_rx_local[7];
+extern uint8_t rs485_rx_local[10];
+
+
 
 
 typedef enum {
@@ -92,6 +94,20 @@ typedef enum{
   rx_rs485_data_success
 
 }Rx_rs485_data;
+
+
+typedef enum{
+
+  power_cmd =0x01,
+  //ptc cmd
+  ptc_cmd =0x02,
+  plasma_cmd = 0x03,
+  ultrasonic_cmd = 0x04,
+  fan_cmd = 0x05,
+  temp_cmd =0xb0, //set tmperature value 
+  error_cmd =0xff
+ 
+}fun_code;
 
 
 
@@ -131,7 +147,12 @@ typedef struct
 	uint8_t TxBuf[H_TX_BUF_SIZE];
 	uint8_t TxCount;
 
-
+	uint8_t rs485_Command_tag;
+	uint8_t rs485_set_temperature_value;
+	uint8_t gTimer_rs485_run_times;
+	uint8_t gTimer_rs485_rx_times;
+	uint8_t rs485_ext_fault_ptc ;
+	uint8_t rs485_ext_fault_fan ;
 
 
 	uint8_t RegNum;			/* 寄存器个数 */
@@ -139,15 +160,15 @@ typedef struct
 	uint8_t slave_machine_fan_warning;
 	uint8_t slave_machine_ptc_warning;
 
-	uint8_t slave_Id[4];
+	uint16_t slave_Id[4];
 	uint8_t distinguish_slave_id;
 
-	uint8_t fAck01H;		/* 应答命令标志 0 表示执行失败 1表示执行成功 */
-	uint8_t fAck02H;
-	uint8_t fAck03H;
-	uint8_t fAck04H;
-	uint8_t fAck05H;		
-	uint8_t fAck06H;		
+	uint8_t fAck01H;		/* 应答命令标志 0 表示执行失败 1表示执行成功  power */
+	uint8_t fAck02H;        //answering signal ptc 
+	uint8_t fAck03H;        //answering signal plasma 
+	uint8_t fAck04H;        //answering signal drive_rat
+	uint8_t fAck05H;		//answering signal fan
+	uint8_t fAck06H;		//answering signal set temperature
 	uint8_t fAckb0H;
 	
 }MODH_T;
@@ -179,12 +200,15 @@ typedef struct
 
 
 void MODH_Poll(void);
-uint8_t  MODH_WriteParam_Power_01H(uint8_t addr,uint8_t _len,uint8_t _reg);
-uint8_t MODH_WriteParam_PTC_02H(uint8_t addr,uint8_t _len,uint8_t _reg);
-uint8_t MODH_WriteParam_Plasma_03H(uint8_t addr,uint8_t _len,uint8_t _reg);
-uint8_t MODH_WriteParam_Ultrasonic_04H(uint8_t addr,uint8_t _len,uint8_t _reg);
-uint8_t MODH_WriteParam_Fan_05H(uint8_t add,uint8_t _num,uint8_t _reg);
-uint8_t MODH_WriteParam_SetTempValue_B0H(uint8_t add,uint8_t _num,uint8_t _reg);
+
+void MODH_Broadcast_Mode(uint8_t fun_code,uint8_t _data);
+
+uint8_t  MODH_WriteParam_Power_01H(uint16_t addr,uint8_t _len,uint8_t _reg);
+uint8_t MODH_WriteParam_PTC_02H(uint16_t addr,uint8_t _len,uint8_t _reg);
+uint8_t MODH_WriteParam_Plasma_03H(uint16_t addr,uint8_t _len,uint8_t _reg);
+uint8_t MODH_WriteParam_Ultrasonic_04H(uint16_t addr,uint8_t _len,uint8_t _reg);
+uint8_t MODH_WriteParam_Fan_05H(uint16_t add,uint8_t _num,uint8_t _reg);
+uint8_t MODH_WriteParam_SetTempValue_B0H(uint16_t add,uint8_t _num,uint8_t _reg);
 
 
 
@@ -193,7 +217,7 @@ uint8_t MODH_WriteParam_SetTempValue_B0H(uint8_t add,uint8_t _num,uint8_t _reg);
 //uint8_t MODH_WriteParam_10H(uint16_t _reg, uint8_t _num, uint8_t *_buf);
 
 void RS485_Host_Send_Communication_Handler(void);
-void Answerback_RS485_Signal(uint8_t addr,uint8_t fun_code,uint8_t len,uint8_t data);
+void Answerback_RS485_Signal(uint16_t addr,uint8_t fun_code,uint8_t len,uint8_t data);
 
 
 

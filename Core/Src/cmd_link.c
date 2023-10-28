@@ -107,9 +107,7 @@ void Display_Decode_Function(void)
    
       run_t.decodeFlag =0;
       Decode_RunCmd();
-   
-      
-     }
+   	}
 }
 /********************************************
 	*
@@ -125,13 +123,13 @@ void USART1_Cmd_Error_Handler(UART_HandleTypeDef *huart)
   if(huart->Instance==USART1){
     
 
-	  if(run_t.gTimer_usart_error >5){
+	  if(run_t.gTimer_usart_error >10){
 	  	run_t.gTimer_usart_error=0;
 
         __HAL_UART_CLEAR_OREFLAG(&huart1);
 		
         
-        //  temp = USART1->ISR;
+          temp = USART1->ISR;
           temp = USART1->RDR;
   
 		    

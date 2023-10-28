@@ -106,7 +106,7 @@ int main(void)
   #if DEBUG
    printf("Initialize is over\n");
   #endif 
-
+  bsp_Init();
   /* USER CODE END 2 */
   
   /* Infinite loop */
@@ -118,7 +118,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
   
 
-	bsp_Init();
+	
 	Display_Decode_Function();
     if(run_t.decodeFlag ==0){
 

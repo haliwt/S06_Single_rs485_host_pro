@@ -1,9 +1,5 @@
 #include "interrupt_manager.h"
-#include "run.h"
-#include "esp8266.h"
-#include "wifi_fun.h"
-#include "cmd_link.h"
-#include "usart.h"
+#include "bsp.h"
 
 
 //void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
@@ -74,6 +70,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
         run_t.gTimer_1s ++;
 	    run_t.gTimer_10s++;
+		g_tModH.gTimer_rs485_run_times++;
+		g_tModH.gTimer_rs485_rx_times++;
 		
      
 	
@@ -87,7 +85,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	    run_t.gTimer_ptc_adc_times ++; 
         run_t.gTimer_fan_adc_times++ ;
-		run_t.gTimer_rs485_times++;
+	
 		run_t.gTimer_dogfood_times++;
 	 
 		}
