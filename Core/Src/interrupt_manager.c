@@ -87,6 +87,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         run_t.gTimer_fan_adc_times++ ;
 	
 		run_t.gTimer_dogfood_times++;
+		g_tModH.gTimer_fault_ptc_times++;
+		g_tModH.gTimer_fault_fan_times++;
 	 
 		}
  	}

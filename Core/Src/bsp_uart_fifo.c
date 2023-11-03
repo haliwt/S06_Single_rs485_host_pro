@@ -511,6 +511,7 @@ uint8_t UartTxEmpty(COM_PORT_E _ucPort)
 */
 static void UartIRQ(UART_T *_pUart)
 {
+	static uint8_t rx_flag;
 	uint32_t isrflags   = READ_REG(_pUart->uart->ISR);
 	uint32_t cr1its     = READ_REG(_pUart->uart->CR1);
 	uint32_t cr3its     = READ_REG(_pUart->uart->CR3);
@@ -531,16 +532,22 @@ static void UartIRQ(UART_T *_pUart)
 //			_pUart->usRxCount++;
 //		}
         g_tModH.rs485_RxInputBuf[0]=USART2->RDR;
-		g_tModH.RxBuf[g_tModH.RxCount] = g_tModH.rs485_RxInputBuf[0];
-		g_tModH.RxCount++;
+		if(rx_flag==0 && g_tModH.Rx_rs485_data_flag ==0){
+		    if(g_tModH.rs485_RxInputBuf[0]==0xAA)rx_flag++;
+		}
+		if(rx_flag==1){
+			g_tModH.RxBuf[g_tModH.RxCount] = g_tModH.rs485_RxInputBuf[0];
+			g_tModH.RxCount++;
+		}
 		/* 回调函数,通知应用程序收到新数据,一般是发送1个消息或者设置一个标记 */
 		//if (_pUart->usRxWrite == _pUart->usRxRead)
 		if(g_tModH.RxCount == 10 )
 		{
-            memcpy(rs485_rx_local,g_tModH.RxBuf,9);
-			g_tModH.Rx_rs485_data_flag = 1;
+            rx_flag=0;
+			memcpy(rs485_rx_local,g_tModH.RxBuf,10);
+			g_tModH.Rx_rs485_data_flag = rx_rs485_data_success;
 			success_flag ++;
-			g_tModH.RxCount =0;
+			//g_tModH.RxCount =0;
 //			if (_pUart->ReciveNew)
 //			{
 //				_pUart->ReciveNew(ch); /* 比如，交给MODBUS解码程序处理字节流 */
@@ -548,7 +555,7 @@ static void UartIRQ(UART_T *_pUart)
 		}
 		
 	}
-    UART_Start_Receive_IT(&huart2,g_tModH.rs485_RxInputBuf,0x07);
+    UART_Start_Receive_IT(&huart2,g_tModH.rs485_RxInputBuf,10);
 	/* 处理发送缓冲区空中断 */
 	if ( ((isrflags & USART_ISR_TXE_TXFNF) != RESET) && (cr1its & USART_CR1_TXEIE_TXFNFIE) != RESET)
 	{

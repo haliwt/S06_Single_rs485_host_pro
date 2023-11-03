@@ -248,12 +248,12 @@ int str_to_int(char *_pStr)
 */
 uint16_t BEBufToUint16(uint8_t *_pBuf)
 {
-    return (((uint16_t)_pBuf[0] << 8) | _pBuf[1]);
+    return (((uint16_t)_pBuf[1] << 8) | _pBuf[2]);
 }
 
 uint16_t BEBufToUint16_SlaveAddress(uint8_t *_pBuf)
 {
-    return (((uint16_t)_pBuf[2] << 8) | _pBuf[3]);
+    return (((uint16_t)_pBuf[3] << 8) | _pBuf[4]);
 }
 
 

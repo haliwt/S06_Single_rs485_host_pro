@@ -125,12 +125,34 @@ typedef enum{
    plasma_order,
    ultrasonic_order,
    fan_order,
+   fan_trouble=0xA0,
+   ptc_trouble=0xB0,
+  
    rs485_no_order =0xff
    
  }rx485_send_fun_code;
 
 
 typedef enum _mod_fun mod_fun_codes;
+
+typedef struct
+{
+	/* 03H 06H ��д���ּĴ��� */
+	uint8_t pro_head;
+	uint8_t pro_boadcast;
+	
+	uint8_t pro_fun_code;
+	uint8_t pro_data_len;
+	uint8_t pro_data;
+
+	uint16_t pro_addr;
+	uint16_t pro_local_addr;
+
+
+}Protocol_t;
+
+extern Protocol_t g_tPro;
+
 
 
 typedef struct
@@ -153,6 +175,8 @@ typedef struct
 	uint8_t gTimer_rs485_rx_times;
 	uint8_t rs485_ext_fault_ptc ;
 	uint8_t rs485_ext_fault_fan ;
+	uint8_t gTimer_fault_ptc_times;
+	uint8_t gTimer_fault_fan_times;
 
 
 	uint8_t RegNum;			/* 寄存器个数 */
@@ -163,7 +187,8 @@ typedef struct
 	uint16_t slave_Id[4];
 	uint8_t distinguish_slave_id;
 
-	uint8_t fAck01H;		/* 应答命令标志 0 表示执行失败 1表示执行成功  power */
+	uint8_t rx485_rx_data_flag;		/* 应答命令标志 0 表示执行失败 1表示执行成功  power */
+    uint8_t fAck01H;
 	uint8_t fAck02H;        //answering signal ptc 
 	uint8_t fAck03H;        //answering signal plasma 
 	uint8_t fAck04H;        //answering signal drive_rat

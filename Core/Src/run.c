@@ -383,6 +383,8 @@ void RunCommand_MainBoard_Fun(void)
 		 run_t.interval_time_stop_run=0;
 		 run_t.fan_warning =0;
 		 run_t.ptc_warning =0;
+		 g_tModH.rs485_ext_fault_fan = 0;
+		 g_tModH.rs485_ext_fault_ptc = 0;
 
         power_off_flag=0;
 		if(power_off_fan==0){
@@ -575,7 +577,28 @@ static void Current_Works_State(void)
 		     }
 
 		   }
-		    run_state =0;
+		    run_state =7;
+		   break;
+
+		   case 7:
+
+		   if(g_tModH.rs485_ext_fault_fan ==1 && g_tModH.gTimer_fault_fan_times > 7){
+		       g_tModH.gTimer_fault_fan_times =0;
+
+		       SendWifiCmd_To_Order(SLAVE_FAN_WARNING);
+
+
+		   }
+
+		   if(g_tModH.rs485_ext_fault_ptc==1 && g_tModH.gTimer_fault_ptc_times > 3){
+
+                     g_tModH.gTimer_fault_ptc_times=0;
+
+					 SendWifiCmd_To_Order(SLAVE_PTC_WARNING);
+		   }
+
+
+           run_state =0;
 		   break;
 
 		}

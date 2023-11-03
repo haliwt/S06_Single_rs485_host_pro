@@ -101,7 +101,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim14);//HAL_TIM_Base_Start(&htim3);
   UART_Start_Receive_IT(&huart1,inputBuf,1);
-  UART_Start_Receive_IT(&huart2, g_tModH.rs485_RxInputBuf,0x07);
+  UART_Start_Receive_IT(&huart2, g_tModH.rs485_RxInputBuf,10);
   run_t.gFan_level=fan_speed_max;
   #if DEBUG
    printf("Initialize is over\n");

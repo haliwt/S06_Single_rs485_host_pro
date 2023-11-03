@@ -47,9 +47,9 @@ const MODBUSBPS_T ModbusBaudRate[] =
 	{230400, 1750},
 };
 
-MODH_T g_tModH = {0};
+MODH_T g_tModH ;
+Protocol_t g_tPro;
 
-VAR_T g_tVar;
 uint8_t crc16_check_flag;
 uint8_t rs485_rx_local[10];
 
@@ -129,7 +129,8 @@ void MODH_Broadcast_Mode(uint8_t fun_code,uint8_t _data)
 {
 	g_tModH.TxCount = 0;
 	g_tModH.TxBuf[g_tModH.TxCount++] = HEAD_FLAG;  
-	g_tModH.TxBuf[g_tModH.TxCount++] = 0x55;		
+	g_tModH.TxBuf[g_tModH.TxCount++] = 0x55;
+	g_tModH.TxBuf[g_tModH.TxCount++] = 0x55;
 	g_tModH.TxBuf[g_tModH.TxCount++] = 0x00;		/* 从站地址 发送地址 ,高字节数据，大端发送*/	
 	g_tModH.TxBuf[g_tModH.TxCount++] = MasterAddr;	/* 从站地址 发送地址 ,低字节数据，大端发送*/
 	g_tModH.TxBuf[g_tModH.TxCount++] = fun_code;		/* 功能码 开机或者关机 */	
@@ -329,6 +330,10 @@ void MODH_Poll(void)
 	uint16_t crc1 ,addr;
 	if(g_tModH.Rx_rs485_data_flag == rx_rs485_data_success){
 		/* 计算CRC校验和，这里是将接收到的数据包含CRC16值一起做CRC16，结果是0，表示正确接收 */
+	     g_tPro.pro_addr = BEBufToUint16(rs485_rx_local);//rs485_rx_local[1];
+
+	     g_tPro.pro_local_addr = BEBufToUint16_SlaveAddress(rs485_rx_local);
+	
 		crc1 = CRC16_Modbus(g_tModH.RxBuf,g_tModH.RxCount);
 		if (crc1 != 0)
 		{
@@ -340,9 +345,9 @@ void MODH_Poll(void)
 		}
 		else{
         	crc16_check_flag = 1;
-			g_tModH.Rx_rs485_data_flag=0;
+			
 		   // memcpy(rs485_rx_local,g_tModH.RxBuf,7);
-			g_tModH.RxCount = 0;	/* 必须清零计数器，方便下次帧同步 */
+				/* 必须清零计数器，方便下次帧同步 */
 		
 		}
     }
@@ -351,6 +356,8 @@ void MODH_Poll(void)
 		MODH_AnalyzeApp();
 		
 		crc16_check_flag=0;
+		g_tModH.RxCount = 0;
+		g_tModH.Rx_rs485_data_flag=0;
 	 
 	
    	}
@@ -368,8 +375,7 @@ void MODH_Poll(void)
 static void MODH_AnalyzeApp(void)
 {	
 	
-    //MODH_Read_Address_01H();
-      MODH_Read_Address_Info();
+    MODH_Read_Address_Info();
 	   
 }
 /*******************************************************************************************************
@@ -382,65 +388,75 @@ static void MODH_AnalyzeApp(void)
 *******************************************************************************************************/
 static void MODH_Read_Address_Info(void)
 {
-   uint8_t byte_send_addr,byte_fun_code,byte_data_len,byte_data;
-   uint16_t byte_addr;
-   static uint8_t step_flag;
-
-   	 byte_send_addr = rs485_rx_local[1];
-
-	 byte_addr = BEBufToUint16_SlaveAddress(rs485_rx_local);
-	 
-     byte_fun_code = rs485_rx_local[4];
-
-	 byte_data_len = rs485_rx_local[5];
-
-	 byte_data = rs485_rx_local[6];
-
    
+ 
 
-  switch(byte_send_addr){ //host of address 
+   	// g_tPro.pro_addr = BEBufToUint16(rs485_rx_local);//rs485_rx_local[1];
 
-  	case  0x55: //answering signal of from host send command or data
+	// g_tPro.pro_local_addr = BEBufToUint16_SlaveAddress(rs485_rx_local);
+	 
+     g_tPro.pro_fun_code = rs485_rx_local[5];
 
-      g_tModH.fAck01H = 1; //answering signal is success .
+	 g_tPro.pro_data_len = rs485_rx_local[6];
 
-    break;
-    case 0x01: //slave machine send data to host signal 
+	g_tPro.pro_data = rs485_rx_local[7];
+	
 
-	    switch(step_flag){
+  if(g_tPro.pro_addr == 0X0001){ //host of address 
 
-		  case 0:
-        	Answerback_RS485_Signal(byte_addr,byte_fun_code, byte_data_len ,byte_data);
-		    step_flag =1;
+      g_tModH.rx485_rx_data_flag = 1;
+	  Answerback_RS485_Signal(g_tPro.pro_local_addr,g_tPro.pro_fun_code,g_tPro.pro_data_len,g_tPro.pro_data);
+	  rs485_rx_local[1]=0;
+      rs485_rx_local[2]=0;
+      g_tPro.pro_addr=0xff;
+  }
+
+  if(g_tModH.rx485_rx_data_flag == 1){
+
+    switch(g_tPro.pro_fun_code){
+  
+          case 0xff:
+
+	            switch(g_tPro.pro_data){
+
+				   case ptc_trouble:
+
+				    g_tModH.rs485_ext_fault_ptc =1 ;  
+				    g_tModH.gTimer_fault_ptc_times = 12;//at once run this action
+
+				   break;
+
+				   case fan_trouble:
+
+				    g_tModH.rs485_ext_fault_fan =1;
+					g_tModH.gTimer_fault_fan_times = 12; //at once run this action
+
+				   break;
+
+
+
+				}
+        	
+		   g_tModH.rx485_rx_data_flag =0xff;
 		  break;
 
 		  case 1:
-            Rx485_Receive_Slave_Id( byte_addr);
-			step_flag =2;
+            
 
 		  break;
 
 		  case 2:
-		   Selection_Sort(g_tModH.slave_Id,4);
-		  step_flag =3;
+		
 
 		  break;
 
 		  case 3:
 
-		   Parse_SlaveAddress_Info(byte_fun_code,byte_data);
-
-		  step_flag =0;
 
 		  break;
 
-
-	    }
-
-		
-
-    break;
-}
+    	}
+	 }
 
 }
   
@@ -483,12 +499,14 @@ static void MODH_Read_Address_Info(void)
 
 		  case 0xA0: //fan default 
 
-		     g_tModH.rs485_ext_fault_fan = 1;
+		    g_tModH.rs485_ext_fault_fan = 1;
+		   SendWifiCmd_To_Order(SLAVE_FAN_WARNING);
 
 		  break;
 
 		  case 0xB0: //PTC default.
 		     g_tModH.rs485_ext_fault_ptc = 1;
+			 SendWifiCmd_To_Order(SLAVE_PTC_WARNING);
 
 		  break;
 
@@ -844,6 +862,7 @@ void Answerback_RS485_Signal(uint16_t addr ,uint8_t fun_code,uint8_t len,uint8_t
 {
 	g_tModH.TxCount = 0;
 	g_tModH.TxBuf[g_tModH.TxCount++]= HEAD_FLAG;
+	g_tModH.TxBuf[g_tModH.TxCount++] = 0x00;
 	g_tModH.TxBuf[g_tModH.TxCount++] = MasterAddr;		/* 主站地址 发送地址 */
 	g_tModH.TxBuf[g_tModH.TxCount++] = addr >> 8;  	/* 本地地址 数据高字节 数据大端发送*/
 	g_tModH.TxBuf[g_tModH.TxCount++] = addr;  		/* 本地地址 数据低字节 数据大端发送*/
