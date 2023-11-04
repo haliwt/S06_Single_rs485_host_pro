@@ -125,10 +125,11 @@ typedef enum{
    plasma_order,
    ultrasonic_order,
    fan_order,
+   slave_address= 0x9F,
    fan_trouble=0xA0,
    ptc_trouble=0xB0,
   
-   rs485_no_order =0xff
+   slave_fault =0xff
    
  }rx485_send_fun_code;
 

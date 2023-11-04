@@ -24,7 +24,7 @@ void RS485_SendBefor(void);
 void RS485_SendOver(void);
 void RS485_ReciveNew(uint8_t _byte);
 
-uint8_t success_flag ;
+
 
 /*
 *********************************************************************************************************
@@ -533,7 +533,10 @@ static void UartIRQ(UART_T *_pUart)
 //		}
         g_tModH.rs485_RxInputBuf[0]=USART2->RDR;
 		if(rx_flag==0 && g_tModH.Rx_rs485_data_flag ==0){
-		    if(g_tModH.rs485_RxInputBuf[0]==0xAA)rx_flag++;
+		    if(g_tModH.rs485_RxInputBuf[0]==0xAA){
+				rx_flag++;
+				g_tModH.RxCount=0;
+		    }
 		}
 		if(rx_flag==1){
 			g_tModH.RxBuf[g_tModH.RxCount] = g_tModH.rs485_RxInputBuf[0];
@@ -546,7 +549,7 @@ static void UartIRQ(UART_T *_pUart)
             rx_flag=0;
 			memcpy(rs485_rx_local,g_tModH.RxBuf,10);
 			g_tModH.Rx_rs485_data_flag = rx_rs485_data_success;
-			success_flag ++;
+			
 			//g_tModH.RxCount =0;
 //			if (_pUart->ReciveNew)
 //			{

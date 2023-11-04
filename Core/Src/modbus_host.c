@@ -58,7 +58,7 @@ static void Rx485_Receive_Slave_Id(uint16_t id);
 static uint8_t findMaxPos(uint16_t *ptarr,uint8_t n);
 static void Selection_Sort(uint16_t *ptarr,uint8_t len);
 static void MODH_Read_Address_Info(void);
-static void Parse_SlaveAddress_Info(uint8_t byte_fun_code,uint8_t byte_data);
+
 
 
 
@@ -306,19 +306,6 @@ void MODH_SendB0H_SetTemperature_Value(uint16_t _addr,uint8_t _data_len,uint8_t 
 
 /*
 *********************************************************************************************************
-*	函 数 名: MODH_RxTimeOut
-*	功能说明: 超过3.5个字符时间后执行本函数。 设置全局变量 g_rtu_timeout = 1; 通知主程序开始解码。
-*	形    参: 无
-*	返 回 值: 无
-*********************************************************************************************************
-*/
-static void MODH_RxTimeOut(void)
-{
-	//g_modh_timeout = 1;
-}
-
-/*
-*********************************************************************************************************
 *	函 数 名: MODH_Poll
 *	功能说明: 接收控制器指令. 1ms 响应时间。
 *	形    参: 无
@@ -406,8 +393,6 @@ static void MODH_Read_Address_Info(void)
 
       g_tModH.rx485_rx_data_flag = 1;
 	  Answerback_RS485_Signal(g_tPro.pro_local_addr,g_tPro.pro_fun_code,g_tPro.pro_data_len,g_tPro.pro_data);
-	  rs485_rx_local[1]=0;
-      rs485_rx_local[2]=0;
       g_tPro.pro_addr=0xff;
   }
 
@@ -415,7 +400,7 @@ static void MODH_Read_Address_Info(void)
 
     switch(g_tPro.pro_fun_code){
   
-          case 0xff:
+          case slave_fault :
 
 	            switch(g_tPro.pro_data){
 
@@ -440,9 +425,11 @@ static void MODH_Read_Address_Info(void)
 		   g_tModH.rx485_rx_data_flag =0xff;
 		  break;
 
-		  case 1:
-            
+		  case slave_address: //
 
+		   Rx485_Receive_Slave_Id(g_tPro.pro_local_addr);
+            
+          g_tModH.rx485_rx_data_flag =0xff;
 		  break;
 
 		  case 2:
@@ -467,63 +454,7 @@ static void MODH_Read_Address_Info(void)
 *	形    参: 无
 *	返 回 值: 无
 **********************************************************************************************************/
- static void Parse_SlaveAddress_Info(uint8_t byte_fun_code,uint8_t byte_data)
-{
-    
-    switch(byte_fun_code){
 
-	case power_cmd:
-
-	break;
-
-	case ptc_cmd:
-
-	break;
-
-	case plasma_cmd:
-
-	break;
-
-	case ultrasonic_cmd:
-
-	break;
-
-	case fan_cmd:
-
-	break;
-	
-
-      
-    case error_cmd:
-        switch(byte_data){
-
-		  case 0xA0: //fan default 
-
-		    g_tModH.rs485_ext_fault_fan = 1;
-		   SendWifiCmd_To_Order(SLAVE_FAN_WARNING);
-
-		  break;
-
-		  case 0xB0: //PTC default.
-		     g_tModH.rs485_ext_fault_ptc = 1;
-			 SendWifiCmd_To_Order(SLAVE_PTC_WARNING);
-
-		  break;
-
-
-		}
-
-	break;
-
-
-
-
-	}
-
-
-
-
-}
 /*
 *********************************************************************************************************
 *	函 数 名: MODH_ReadParam_01H
@@ -596,9 +527,8 @@ uint8_t MODH_WriteParam_PTC_02H(uint16_t add,uint8_t _num,uint8_t _reg)
 	
 	for (i = 0; i < NUM; i++)
 	{
-		//MODH_Send02H (SlaveAddr_1, _reg, _num);
+		
 		MODH_Send00H_Ptc_OnOff(add,_num,_reg);
-	   // g_tModH.rx485_send_fun_code = ptc_order;
 		g_tModH.gTimer_rs485_rx_times=0;
 		
 		while (1)
@@ -985,111 +915,71 @@ static void Rx485_Receive_Slave_Id(uint16_t id)
 
        static uint8_t slave_id_one,slave_id_two,slave_id_three,slave_id_four;
 
-	   if(g_tModH.slave_Id[0]==0){
+	   if(g_tModH.slave_Id[3]!=0){
+           Selection_Sort(g_tModH.slave_Id,4);
 
-		   if(slave_id_one ==0){
-		     
-			 if(id != g_tModH.slave_Id[0] && id != g_tModH.slave_Id[1] && id != g_tModH.slave_Id[2] && id != g_tModH.slave_Id[3]){
-		     g_tModH.slave_Id[0]= id;
-			 g_tModH.distinguish_slave_id = 1;
-			  slave_id_one++;
-             return ;
+	   }
+	   else{
 
-			 }
+	   if(g_tModH.slave_Id[0]==0)g_tModH.slave_Id[0]=id;
+	   else{
 
-		   }
-		  }
-		  else{
-	       if(id == g_tModH.slave_Id[0]){ // && g_tModH.slave_Id[0]!= g_tModH.slave_Id[2] && g_tModH.slave_Id[0]!= g_tModH.slave_Id[3]){
-	         g_tModH.distinguish_slave_id = 1;
-			return ;
+		   if(g_tModH.slave_Id[0]!=0){
 
-	       }
+	          if(g_tModH.slave_Id[0]==id){
+			  	g_tModH.rx485_rx_data_flag =0xff;
+			  	return;
+	          }
+			  else if(g_tModH.slave_Id[1] ==0){
 
-		  }
-	
-
-		
-	     if(g_tModH.slave_Id[1]==0){
-
-		   if(slave_id_two ==0){
-		   
-			 if(id != g_tModH.slave_Id[0] && id != g_tModH.slave_Id[1] && id != g_tModH.slave_Id[2] && id != g_tModH.slave_Id[3]){
-			  g_tModH.slave_Id[1]= id;
-			  g_tModH.distinguish_slave_id = 2;
-			   slave_id_two++;
-
-			 return ;
-
-			}
-
-		   }
-	     }
-		 else{
-
-		   if(id == g_tModH.slave_Id[1]){// && g_tModH.slave_Id[1]!= g_tModH.slave_Id[2] && g_tModH.slave_Id[1]!= g_tModH.slave_Id[3]){
-	           g_tModH.distinguish_slave_id = 2;
-			  return ;
-
-		   	}
-
-		  }
-
-		
-		if(g_tModH.slave_Id[2]==0){
-			if(slave_id_three ==0){
-			 
-
-			 if(id != g_tModH.slave_Id[0] && id != g_tModH.slave_Id[1] && id != g_tModH.slave_Id[2] && id != g_tModH.slave_Id[3]){
-
-			      g_tModH.slave_Id[2]= id;
-				   g_tModH.distinguish_slave_id = 3;
-				   slave_id_three++;
-				  return;
-
-             }
-           }
-		    
-	    }
-		else{
-
-		    if(id == g_tModH.slave_Id[2]){ //!= g_tModH.slave_Id[0] && g_tModH.slave_Id[2]!= g_tModH.slave_Id[1] && g_tModH.slave_Id[2]!= g_tModH.slave_Id[3])
-			   g_tModH.distinguish_slave_id = 3;
-				return ;
-
-		    }
-
-
-		}
-
-
-		
-		if(g_tModH.slave_Id[3]==0){
-
-			if(slave_id_four ==0){
-
-	         if(id != g_tModH.slave_Id[0] && id != g_tModH.slave_Id[1] && id != g_tModH.slave_Id[2] && id != g_tModH.slave_Id[3]){
-		         g_tModH.slave_Id[3]= id;
-				 g_tModH.distinguish_slave_id = 4;
-				 slave_id_four++;
-
-			   }
-		     }
-		}
-		else{
-
-              if(id == g_tModH.slave_Id[3]){
-			   g_tModH.distinguish_slave_id = 4;
-
-                return ;
+				g_tModH.slave_Id[1]=id;
+				return;
 
 			  }
+		   	 }
+	   	}
 
+		if(g_tModH.slave_Id[1]!=0){
 
+		    if(g_tModH.slave_Id[1]==id){
+				g_tModH.rx485_rx_data_flag =0xff;
+		  	      return;
+		    }
+		    else if(g_tModH.slave_Id[2] ==0){
+
+				g_tModH.slave_Id[2]=id;
+				return;
+
+		   }
 		}
-	       
+		
+	    if(g_tModH.slave_Id[2]!=0){
+			 	
+		  	if(g_tModH.slave_Id[2]==id){
+				g_tModH.rx485_rx_data_flag =0xff;
+		  	      return;
+		    }
+		  	else if(g_tModH.slave_Id[3] ==0){
 
-}
+				g_tModH.slave_Id[3]=id;
+				return;
+
+		   }
+		}
+		
+	   if(g_tModH.slave_Id[3]!=0){
+			  	
+					
+			  	if(g_tModH.slave_Id[3]==id){
+					 g_tModH.rx485_rx_data_flag =0xff;
+			  	      return;
+			    }
+			    
+			  }
+			  
+	   	}
+
+ }
 
 /*****************************************************************************
 	*
